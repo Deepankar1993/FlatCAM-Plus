@@ -188,9 +188,139 @@ class ToolLaser(AppTool):
         """When the power is set in the sender (LaserGRBL), the Power entry is greyed out."""
         self.ui.power_entry.setDisabled(val == 'sender')
 
+    def _resolve_geometry(self, source_obj):
+        """Return a GeometryObject to trace. For a Gerber source create an internal
+        'follow' geometry (the centerline of the Gerber traces)."""
+        if source_obj.kind == 'geometry':
+            return source_obj
+
+        if source_obj.kind == 'gerber':
+            trace_name = '%s_laser_trace' % source_obj.obj_options['name']
+
+            # follow_geo() -> app_obj.new_object() runs synchronously when called from the
+            # main thread (the object_created signal is delivered directly), so the new
+            # object is in the collection when the call returns. The collection may rename
+            # it on a name collision, therefore detect it by diffing the collection names.
+            names_before = set(self.app.collection.get_names())
+            source_obj.follow_geo(outname=trace_name)
+
+            geo = None
+            for new_name in set(self.app.collection.get_names()) - names_before:
+                candidate = self.app.collection.get_by_name(new_name)
+                if candidate is not None and candidate.kind == 'geometry':
+                    geo = candidate
+                    break
+
+            if geo is None:
+                self.app.inform.emit('[ERROR_NOTCL] %s' % _("Could not create the laser trace geometry."))
+            return geo
+
+        self.app.inform.emit('[ERROR_NOTCL] %s' % _("Select a Gerber or Geometry object."))
+        return None
+
     def on_generate(self):
-        # implemented in a later step
-        pass
+        """Generate a CNCJob object with laser G-code from the selected source object."""
+        obj_name = self.ui.object_combo.currentText()
+        source_obj = self.app.collection.get_by_name(obj_name)
+        if source_obj is None:
+            self.app.inform.emit('[ERROR_NOTCL] %s: %s' % (_("Object not found"), str(obj_name)))
+            return
+
+        geo = self._resolve_geometry(source_obj)
+        if geo is None:
+            return
+
+        # laser parameters from the UI
+        power_in_app = self.ui.power_source_radio.get_value() == 'app'
+        power_pct = self.ui.power_entry.get_value()
+        speed = self.ui.speed_entry.get_value()
+        n_passes = int(self.ui.passes_entry.get_value())
+        air_assist = self.ui.air_assist_cb.get_value()
+        laser_mode = self.ui.mode_radio.get_value()
+
+        params = {
+            'power_in_app': power_in_app,
+            'power_pct': power_pct,
+            'power_max': float(self.app.options['tools_laser_power_max']),
+            'speed': speed,
+            'air_assist': air_assist,
+            'laser_mode': laser_mode,
+        }
+
+        tools_dict = laser_core.build_laser_tools_dict(geo.obj_options, params, geo.solid_geometry)
+
+        # adapt the dict to what the milling engine reads
+        for tool_uid in tools_dict:
+            tool_data = tools_dict[tool_uid]['data']
+            # the engine takes the tool diameter from the data dict
+            tool_data['tools_mill_tooldia'] = laser_core.LASER_MARKER_DIA
+            # the engine expects a number here (the empty string used as the 'power set in
+            # the sender' marker would raise in float()/int()); a 0 value makes the laser
+            # preprocessors emit a bare M3/M4 so LaserGRBL controls the power
+            if tool_data['tools_mill_spindlespeed'] == '':
+                tool_data['tools_mill_spindlespeed'] = 0
+
+        out_name = '%s_laser' % source_obj.obj_options['name']
+
+        # Generate the CNCJob with the same engine the Milling plugin uses; unlike the
+        # legacy GeometryObject.mtool_gen_cncjob() it forwards the laser parameters
+        # (tools_mill_laser_on, tools_mill_min_power) to the G-code generator.
+        # With use_thread=False it runs synchronously on the main thread, so the new
+        # object is in the collection when the call returns; the collection may rename
+        # it on a name collision, therefore detect it by diffing the collection names.
+        names_before = set(self.app.collection.get_names())
+        self.app.milling_tool.generate_cnc_job_handler(
+            geo_obj=geo, outname=out_name, tools_dict=tools_dict,
+            toolchange=False, plot=True, use_thread=False, from_tcl=True)
+
+        cncjob = None
+        for new_name in set(self.app.collection.get_names()) - names_before:
+            candidate = self.app.collection.get_by_name(new_name)
+            if candidate is not None and candidate.kind == 'cncjob':
+                cncjob = candidate
+                break
+
+        if cncjob is None:
+            self.app.inform.emit('[ERROR_NOTCL] %s' % _("Laser job generation failed."))
+            return
+
+        # the milling engine switches to the Properties tab; come back to this plugin
+        self.app.ui.notebook.setCurrentWidget(self.app.ui.plugin_tab)
+
+        # multiple passes: repeat the cut body (laser ON .. laser OFF) of each tool G-code
+        if n_passes > 1:
+            repeated_any = False
+            for tool_uid in cncjob.tools:
+                new_gcode, ok = laser_core.repeat_cut_passes(cncjob.tools[tool_uid]['gcode'], n_passes)
+                if ok:
+                    cncjob.tools[tool_uid]['gcode'] = new_gcode
+                    repeated_any = True
+            if not repeated_any:
+                self.app.inform.emit(
+                    '[WARNING_NOTCL] %s' % _("Could not apply multiple passes; generated a single pass. "
+                                             "You can set passes in LaserGRBL instead."))
+
+        # The export - and the CNCJob object's own 'Save CNC Code' button - write
+        # cncjob.source_file, so rebuild it from the per-tool G-code. This propagates the
+        # repeated passes and also makes sure the start G-code is included (the
+        # multi-geometry engine path leaves it out of source_file).
+        total_gcode = ''
+        for tool_uid in cncjob.tools:
+            total_gcode += cncjob.tools[tool_uid]['gcode']
+        cncjob.source_file = cncjob.gc_start + total_gcode
+
+        self.laser_cncjob = cncjob
+
+        # remember the used parameters
+        self.app.options['tools_laser_power_pct'] = power_pct
+        self.app.options['tools_laser_speed'] = speed
+        self.app.options['tools_laser_passes'] = n_passes
+        self.app.options['tools_laser_air_assist'] = air_assist
+        self.app.options['tools_laser_mode'] = laser_mode
+        self.app.options['tools_laser_power_in_app'] = power_in_app
+        self.app.options['tools_laser_preset'] = self.ui.preset_combo.get_value()
+
+        self.app.inform.emit('[success] %s' % _("Laser job generated. Use 'Export for LaserGRBL'."))
 
     def on_export(self):
         # implemented in a later step
@@ -312,12 +442,12 @@ class LaserUI:
         param_grid.addWidget(self.power_entry, 4, 1)
 
         # Speed
+        speed_unit = _("mm/min") if str(self.app.app_units).upper() == 'MM' else _("in/min")
         self.speed_label = FCLabel('%s:' % _("Speed"))
         self.speed_label.setToolTip(
-            _("The speed of the laser head while the laser is on,\n"
-              "in mm/min.")
+            '%s\n%s.' % (_("The speed of the laser head while the laser is on,"), speed_unit)
         )
-        self.speed_entry = FCDoubleSpinner(suffix=_("mm/min"), callback=self.confirmation_message)
+        self.speed_entry = FCDoubleSpinner(suffix=speed_unit, callback=self.confirmation_message)
         self.speed_entry.set_range(1.0000, 100000.0000)
         self.speed_entry.set_precision(self.decimals)
         self.speed_entry.setSingleStep(10)
