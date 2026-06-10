@@ -147,7 +147,20 @@ class FlatCAMObj(QtCore.QObject):
         for attr in self.ser_attrs:
 
             if attr == 'options':
-                self.obj_options.update(d[attr])
+                try:
+                    self.obj_options.update(d[attr])
+                except KeyError:
+                    # newer projects store the object options under the 'obj_options' key
+                    self.obj_options.update(d.get('obj_options', {}))
+            elif attr == 'obj_options':
+                # update, do not replace: this keeps the default option keys introduced by newer
+                # app versions which are missing from the stored options of older projects
+                try:
+                    self.obj_options.update(d[attr])
+                except KeyError:
+                    # older projects store the object options under the 'options' key
+                    if 'options' in d:
+                        self.obj_options.update(d['options'])
             else:
                 try:
                     setattr(self, attr, d[attr])

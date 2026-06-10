@@ -8,6 +8,21 @@ CHANGELOG for FlatCAM Evo beta
 
 =================================================
 
+10.06.2026
+
+- bumped version to 8.996
+- fixed a hard crash when opening a project made with an older app version (e.g. 8.994): the "Legacy Project" question dialog was created from a worker thread which is not allowed in Qt
+- legacy projects are now converted automatically on load (no more question dialog); the project is marked as modified so saving it stores it in the current format
+- fixed a crash after loading legacy projects: FlatCAMObj.from_dict() replaced the object options instead of updating them, losing the default option keys added by newer versions (e.g. 'tools_mill_tooldia' KeyError in GeometryObject.set_ui())
+- the object options stored under the old 'options' key are now recognized and mapped to 'obj_options' when loading old projects
+- fixed the legacy CNCJob 'type' detection: when both 'cnc_tools' and 'exc_cnc_tools' keys are present, the non-empty one decides the type
+- made project loading more robust: a corrupted/failed object no longer stops the rest of the project from loading; failed objects are reported in the status bar
+- fixed leftover usages of the renamed FlatCAMObj 'options' attribute (now 'obj_options') in GerberObject.follow_geo() and in the DocumentObject serialized attributes
+- the "Import Settings" question on project load is only asked in interactive GUI usage, not when the app is started with a project file argument or from CLI/Tcl
+- added build_windows.ps1 and flatcam.spec for building a portable Windows distribution with PyInstaller; fixed camlib to treat ortools as optional also when its DLLs fail to load (ImportError instead of ModuleNotFoundError)
+
+=================================================
+
 5.03.2025
 
 - upgrade to use the new notations in the Shapely's buffer method for the cap_style and join_style parameters (used to be integers, now they are strings or defines)

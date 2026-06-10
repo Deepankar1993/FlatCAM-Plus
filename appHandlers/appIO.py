@@ -2462,6 +2462,25 @@ class appIO(QtCore.QObject):
             self.inform.emit('[ERROR_NOTCL] %s: %s' % (_("Failed."), filename))
             return
 
+    @staticmethod
+    def is_legacy_project_dict(d):
+        """
+        Detect a project dictionary saved by an older app version. Old projects store the object
+        options under the 'options' key (now 'obj_options') and hold per-type tool storage in
+        'apertures' / 'cnc_tools' / 'exc_cnc_tools' attributes (now unified in 'tools').
+
+        :param d:   the parsed (JSON) project dictionary
+        :return:    True if the project was made by an older app version
+        """
+        for obj in d.get('objs', []):
+            if not isinstance(obj, dict):
+                continue
+            if 'cnc_tools' in obj or 'exc_cnc_tools' in obj or 'apertures' in obj:
+                return True
+            if 'obj_options' not in obj and 'options' in obj:
+                return True
+        return False
+
     def open_project(self, filename, run_from_arg=False, plot=True, cli=False, from_tcl=False):
         """
         Loads a project from the specified file.
@@ -2542,41 +2561,21 @@ class appIO(QtCore.QObject):
                         self.inform.emit('[ERROR_NOTCL] %s: %s' % (_("Failed to open project file"), prj_filename))
                         return
 
-                # Check for older projects
-                found_older_project = False
-                for obj in d['objs']:
-                    if 'cnc_tools' in obj or 'exc_cnc_tools' in obj or 'apertures' in obj:
-                        self.app.log.error(
-                            'appIO.open_project() --> %s %s. %s' %
-                            ("Failed to open the CNCJob file:", str(obj['options']['name']),
-                             "Maybe it is an old project."))
-                        found_older_project = True
+                # basic sanity check on the parsed structure; a corrupted file should not take the app down
+                if not isinstance(d, dict) or 'objs' not in d or 'options' not in d:
+                    self.log.error("Project file is malformed (missing 'objs'/'options'): %s" % prj_filename)
+                    self.inform.emit('[ERROR_NOTCL] %s: %s' % (_("Failed to open project file"), prj_filename))
+                    return
 
-                if found_older_project:
-                    if not run_from_arg or not cli or from_tcl is False:
-                        msgbox = FCMessageBox(parent=self.app.ui)
-                        title = _("Legacy Project")
-                        txt = _("The project was made with an older app version.\n"
-                                "It may not load correctly.\n\n"
-                                "Do you want to continue?")
-                        msgbox.setWindowTitle(title)  # taskbar still shows it
-                        msgbox.setWindowIcon(QtGui.QIcon(self.app.resource_location + '/app128.png'))
-                        msgbox.setText('<b>%s</b>' % title)
-                        msgbox.setInformativeText(txt)
-                        msgbox.setIcon(QtWidgets.QMessageBox.Icon.Question)
-
-                        bt_ok = msgbox.addButton(_('Ok'), QtWidgets.QMessageBox.ButtonRole.AcceptRole)
-                        bt_cancel = msgbox.addButton(_('Cancel'), QtWidgets.QMessageBox.ButtonRole.RejectRole)
-
-                        msgbox.setDefaultButton(bt_ok)
-                        msgbox.exec()
-                        response = msgbox.clickedButton()
-
-                        if response == bt_cancel:
-                            return
-                    else:
-                        self.app.log.error("Legacy Project. Loading not supported.")
-                        return
+                # Check for older projects and convert them in-place to the current format.
+                # NOTE: this runs in a worker thread, therefore no GUI (dialogs etc.) is allowed here.
+                if self.is_legacy_project_dict(d):
+                    self.app.log.warning(
+                        "appIO.open_project() --> Legacy project detected (made with an older app version). "
+                        "It will be converted automatically to the current format.")
+                    self.inform.emit('[WARNING_NOTCL] %s' %
+                                     _("Legacy project detected. It was converted automatically. "
+                                       "Save the project to store it in the new format."))
 
                 self.app.restore_project.emit(d, prj_filename, run_from_arg, from_tcl, cli, plot)
 
@@ -2592,7 +2591,9 @@ class appIO(QtCore.QObject):
         else:
             self.on_file_new_project()
 
-        if not run_from_arg or not cli or from_tcl is False:
+        # ask only in interactive GUI usage; when run with a file argument, from CLI or from Tcl
+        # there is nobody to answer a dialog, so the project settings are imported by default
+        if not (run_from_arg or cli or from_tcl):
             msgbox = FCMessageBox(parent=self.app.ui)
             title = _("Import Settings")
             txt = _("Do you want to import the loaded project settings?")
@@ -2633,108 +2634,135 @@ class appIO(QtCore.QObject):
 
         def worker_task():
             with self.app.proc_container.new('%s' % _("Loading...")):
+                is_legacy = self.is_legacy_project_dict(proj_dict)
+                failed_objects = []
+
                 # Re-create objects
-                self.log.debug(" **************** Started PROEJCT loading... **************** ")
+                self.log.debug(" **************** Started PROJECT loading... **************** ")
                 for obj in proj_dict['objs']:
                     try:
+                        # for older projects the object options were stored under the 'options' key
+                        # (now 'obj_options'); alias them so the rest of the loading handles one format only
+                        if 'obj_options' not in obj and 'options' in obj:
+                            obj['obj_options'] = obj['options']
+
                         obj_name = obj['obj_options']['name']
-                    except KeyError:
-                        # allowance for older projects
-                        obj_name = obj['options']['name']
-                    self.app.log.debug(
-                        f"Recreating from opened project an {obj['kind'].capitalize()} object: {obj_name}")
+                        self.app.log.debug(
+                            f"Recreating from opened project an {obj['kind'].capitalize()} object: {obj_name}")
 
-                    def obj_init(new_obj, app_inst):
-                        try:
-                            new_obj.from_dict(obj)
-                        except Exception as except_error:
-                            app_inst.log.error('appIO.open_project() --> ' + str(except_error))
-                            return 'fail'
+                        def obj_init(new_obj, app_inst):
+                            try:
+                                new_obj.from_dict(obj)
+                            except Exception as except_error:
+                                app_inst.log.error('appIO.open_project() --> ' + str(except_error))
+                                return 'fail'
 
-                        # make the 'obj_options' dict a LoudDict
-                        new_obj_options = LoudDict()
-                        try:
-                            new_obj_options.update(new_obj.obj_options)
-                        except AttributeError:
-                            new_obj_options.update(new_obj.options)
-                        except Exception as except_error:
-                            app_inst.log.error('appIO.open_project() make a LoudDict--> ' + str(except_error))
-                            return 'fail'
+                            # make the 'obj_options' dict a LoudDict
+                            new_obj_options = LoudDict()
+                            try:
+                                new_obj_options.update(new_obj.obj_options)
+                            except AttributeError:
+                                new_obj_options.update(new_obj.options)
+                            except Exception as except_error:
+                                app_inst.log.error('appIO.open_project() make a LoudDict--> ' + str(except_error))
+                                return 'fail'
 
-                        new_obj.obj_options = new_obj_options
+                            new_obj.obj_options = new_obj_options
 
-                        # #############################################################################################
-                        # for older projects loading try to convert the 'apertures' or 'cnc_tools' or 'exc_cnc_tools'
-                        # attributes, if found, to 'tools'
-                        # #############################################################################################
-                        # for older loaded projects
-                        if 'apertures' in obj:
-                            new_obj.tools = obj['apertures']
-                        if 'cnc_tools' in obj and obj['cnc_tools']:
-                            new_obj.tools = obj['cnc_tools']
-                        if 'exc_cnc_tools' in obj and obj['exc_cnc_tools']:
-                            new_obj.tools = obj['exc_cnc_tools']
-                            # add the used_tools (all of them will be used)
-                            new_obj.used_tools = [float(k) for k in new_obj.tools.keys()]
-                            # add a missing key, 'tooldia' used for plotting CNCJob objects
-                            for td in new_obj.tools:
-                                new_obj.tools[td]['tooldia'] = float(td)
-                        # #############################################################################################
-                        # #############################################################################################
+                            # #############################################################################################
+                            # for older projects loading try to convert the 'apertures' or 'cnc_tools' or
+                            # 'exc_cnc_tools' attributes, if found, to 'tools'
+                            # #############################################################################################
+                            try:
+                                if 'apertures' in obj:
+                                    new_obj.tools = obj['apertures']
+                                if 'cnc_tools' in obj and obj['cnc_tools']:
+                                    new_obj.tools = obj['cnc_tools']
+                                if 'exc_cnc_tools' in obj and obj['exc_cnc_tools']:
+                                    new_obj.tools = obj['exc_cnc_tools']
+                                    # add the used_tools (all of them will be used)
+                                    new_obj.used_tools = [float(k) for k in new_obj.tools.keys()]
+                                    # add a missing key, 'tooldia' used for plotting CNCJob objects
+                                    for td in new_obj.tools:
+                                        new_obj.tools[td]['tooldia'] = float(td)
+                            except Exception as legacy_conv_error:
+                                app_inst.log.error(
+                                    'appIO.open_project() legacy tools conversion--> ' + str(legacy_conv_error))
+                            # #############################################################################################
+                            # #############################################################################################
 
-                        # try to make the keys in the tools dictionary to be integers
-                        # JSON serialization makes them strings
-                        # not all FlatCAM objects have the 'tools' dictionary attribute
-                        try:
-                            new_obj.tools = {
-                                int(tool): tool_dict for tool, tool_dict in list(new_obj.tools.items())
-                            }
-                        except ValueError:
+                            # try to make the keys in the tools dictionary to be integers
+                            # JSON serialization makes them strings
+                            # not all FlatCAM objects have the 'tools' dictionary attribute
+                            try:
+                                new_obj.tools = {
+                                    int(tool): tool_dict for tool, tool_dict in list(new_obj.tools.items())
+                                }
+                            except ValueError:
+                                # for older loaded projects
+                                try:
+                                    new_obj.tools = {
+                                        float(tool): tool_dict for tool, tool_dict in list(new_obj.tools.items())
+                                    }
+                                except Exception as other_error_msg:
+                                    # keep the keys as they are; a partially converted object is
+                                    # better than a lost one
+                                    app_inst.log.error(
+                                        'appIO.open_project() keys to float--> ' + str(other_error_msg))
+                            except AttributeError:
+                                # this object type has no 'tools' attribute
+                                pass
+                            except Exception as other_error_msg:
+                                app_inst.log.error('appIO.open_project() keys to int--> ' + str(other_error_msg))
+
+                            # #############################################################################################
                             # for older loaded projects
-                            new_obj.tools = {
-                                float(tool): tool_dict for tool, tool_dict in list(new_obj.tools.items())
-                            }
-                        except Exception as other_error_msg:
-                            app_inst.log.error('appIO.open_project() keys to int--> ' + str(other_error_msg))
-                            return 'fail'
+                            # only older CNCJob objects hold those; both keys may be present so decide on
+                            # the one that actually holds tools
+                            if obj.get('cnc_tools'):
+                                new_obj.obj_options['type'] = 'Geometry'
+                            if obj.get('exc_cnc_tools'):
+                                new_obj.obj_options['type'] = 'Excellon'
+                            # #############################################################################################
 
-                        # #############################################################################################
-                        # for older loaded projects
-                        # ony older CNCJob objects hold those
-                        if 'cnc_tools' in obj:
-                            new_obj.obj_options['type'] = 'Geometry'
-                        if 'exc_cnc_tools' in obj:
-                            new_obj.obj_options['type'] = 'Excellon'
-                        # #############################################################################################
+                            if new_obj.kind == 'cncjob':
+                                # some attributes are serialized, so we need to take this into consideration in
+                                # CNCJob.set_ui()
+                                new_obj.is_loaded_from_project = True
 
-                        if new_obj.kind == 'cncjob':
-                            # some attributes are serialized, so we need to take this into consideration in
-                            # CNCJob.set_ui()
-                            new_obj.is_loaded_from_project = True
-
-                    # for some reason, setting ui_title does not work when this method is called from Tcl Shell
-                    # it's because the TclCommand is run in another thread (it inherits TclCommandSignaled)
-                    try:
+                        # for some reason, setting ui_title does not work when this method is called from Tcl Shell
+                        # it's because the TclCommand is run in another thread (it inherits TclCommandSignaled)
                         if cli is None:
                             self.app.ui.set_ui_title(name="{} {}: {}".format(
                                 _("Loading Project ... restoring"), obj['kind'].upper(), obj_name))
 
-                        ret = self.app.app_obj.new_object(obj['kind'], obj['obj_options']['name'], obj_init, plot=plot)
-                    except KeyError:
-                        # allowance for older projects
-                        if cli is None:
-                            self.app.ui.set_ui_title(name="{} {}: {}".format(
-                                _("Loading Project ... restoring"), obj['kind'].upper(), obj_name))
-                        try:
-                            ret = self.app.app_obj.new_object(obj['kind'], obj_name, obj_init, plot=plot)
-                        except Exception:
-                            continue
-                    if ret == 'fail':
+                        ret = self.app.app_obj.new_object(obj['kind'], obj_name, obj_init, plot=plot)
+                        if ret == 'fail':
+                            failed_objects.append(obj_name)
+                    except Exception as restore_error:
+                        # one corrupted object should not prevent the rest of the project from loading
+                        if isinstance(obj, dict):
+                            failed_name = obj.get('obj_options', {}).get('name') or '<unknown>'
+                        else:
+                            failed_name = '<unknown>'
+                        self.app.log.error("appIO.restore_project_objects() --> Failed to restore object %s: %s" %
+                                           (failed_name, str(restore_error)))
+                        failed_objects.append(failed_name)
                         continue
 
-                self.inform.emit('[success] %s: %s' % (_("Project loaded from"), filename))
+                if failed_objects:
+                    self.inform.emit('[WARNING_NOTCL] %s: %s. %s: %s' %
+                                     (_("Project loaded from"), filename,
+                                      _("Failed to load some objects"), ', '.join(failed_objects)))
+                else:
+                    self.inform.emit('[success] %s: %s' % (_("Project loaded from"), filename))
 
-                self.app.should_we_save = False
+                if is_legacy:
+                    # the project was converted while loading; mark it as having unsaved changes so
+                    # the user is prompted to save it, which stores it in the current format
+                    self.app.should_we_save = True
+                else:
+                    self.app.should_we_save = False
                 self.app.file_opened.emit("project", filename)
 
                 # restore auto-saving after a project was loaded

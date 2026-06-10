@@ -772,7 +772,7 @@ class GerberObject(FlatCAMObj, Gerber):
         """
 
         if outname is None:
-            follow_name = self.options["name"] + "_follow"
+            follow_name = self.obj_options["name"] + "_follow"
         else:
             follow_name = outname
 

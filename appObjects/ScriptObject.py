@@ -265,4 +265,9 @@ class ScriptObject(FlatCAMObj):
         :return: None
         """
         for attr in self.ser_attrs:
-            setattr(self, attr, d[attr])
+            if attr == 'obj_options':
+                # update, do not replace: this keeps the default option keys introduced by newer
+                # app versions which are missing from the stored options of older projects
+                self.obj_options.update(d.get('obj_options', d.get('options', {})))
+            else:
+                setattr(self, attr, d[attr])

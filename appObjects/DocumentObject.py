@@ -124,7 +124,7 @@ class DocumentObject(FlatCAMObj):
         # #######################################################################
 
         # self.document_editor_tab.handleTextChanged()
-        self.ser_attrs = ['options', 'kind', 'source_file']
+        self.ser_attrs = ['obj_options', 'kind', 'source_file']
 
         try:
             if QtGui.Qt.mightBeRichText(self.source_file):
@@ -337,4 +337,9 @@ class DocumentObject(FlatCAMObj):
         :return: None
         """
         for attr in self.ser_attrs:
-            setattr(self, attr, d[attr])
+            if attr == 'obj_options':
+                # update, do not replace: this keeps the default option keys introduced by newer
+                # app versions which are missing from the stored options of older projects
+                self.obj_options.update(d.get('obj_options', d.get('options', {})))
+            else:
+                setattr(self, attr, d[attr])
