@@ -8,6 +8,14 @@ CHANGELOG for FlatCAM Evo beta
 
 =================================================
 
+11.06.2026
+
+- added a new "Laser" plugin aimed at new laser users (CNC 3018 + diode laser with air assist, driven by LaserGRBL): pick a Gerber or Geometry object, choose a material preset (or set Power %/Speed/Passes), generate a laser job, then export a .nc file ready for LaserGRBL
+- the Laser plugin speaks laser vocabulary only (no Z-depth, tool diameter, offset or roughing); Gerber sources are auto-traced to their centerline (follow geometry) so PCB work needs no manual isolation step
+- laser power can be baked into the G-code by FlatCAM (Power % mapped to the S value via the configurable tools_laser_power_max, default 1000) or left for LaserGRBL to control (bare M3/M4 commands)
+- multiple passes re-trace the cut with the laser re-armed per pass, including the rapid back to the cut start
+- material presets are stored in assets/resources/laser_presets.json and are user-editable
+
 10.06.2026
 
 - added a new Geometry/Excellon preprocessor "GRBL_laser_air_assist" for GRBL 1.1 controllers (CNC 3018 and similar) fitted with a diode laser module that has air assist; it is the GRBL laser preprocessor plus air assist control (M8 to turn the air pump ON at job start, M9 to turn it OFF at job end - wire the pump relay to the controller coolant/flood output)
