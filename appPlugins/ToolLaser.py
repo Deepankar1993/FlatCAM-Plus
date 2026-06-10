@@ -10,7 +10,7 @@ import os
 from PyQt6 import QtWidgets, QtCore, QtGui
 from appTool import AppTool
 from appGUI.GUIElements import VerticalScrollArea, FCLabel, FCButton, FCFrame, GLay, FCComboBox, FCCheckBox, \
-    RadioSet, FCDoubleSpinner, FCSpinner
+    RadioSet, FCDoubleSpinner, FCSpinner, FCFileSaveDialog
 
 from appPlugins import laser_core
 
@@ -323,8 +323,46 @@ class ToolLaser(AppTool):
         self.app.inform.emit('[success] %s' % _("Laser job generated. Use 'Export for LaserGRBL'."))
 
     def on_export(self):
-        # implemented in a later step
-        pass
+        """Save the laser job G-code to a file that can be loaded in LaserGRBL."""
+        if self.laser_cncjob is None:
+            self.app.inform.emit('[WARNING_NOTCL] %s' % _("Generate a laser job first."))
+            return
+
+        obj_name = self.laser_cncjob.obj_options['name']
+        last_folder = self.app.options['tools_laser_last_export_folder']
+        if not last_folder or not os.path.isdir(last_folder):
+            last_folder = self.app.get_last_save_folder()
+
+        _filter_ = "G-Code Files (*.nc *.gcode *.ngc);;All Files (*.*)"
+        try:
+            dir_file_to_save = last_folder + '/' + str(obj_name) + '.nc'
+            filename, _f = FCFileSaveDialog.get_saved_filename(
+                caption=_("Export for LaserGRBL"),
+                directory=dir_file_to_save,
+                ext_filter=_filter_
+            )
+        except TypeError:
+            filename, _f = FCFileSaveDialog.get_saved_filename(
+                caption=_("Export for LaserGRBL"),
+                ext_filter=_filter_
+            )
+
+        if str(filename) == '':
+            self.app.inform.emit('[WARNING_NOTCL] %s' % _("Export cancelled ..."))
+            return
+
+        self._export_to_file(filename)
+
+    def _export_to_file(self, filename):
+        """Write the generated laser job G-code to the given file, through the same
+        handler used by the CNCJob object's 'Save CNC Code' button."""
+        filename = str(filename)
+        ret_val = self.laser_cncjob.export_gcode_handler(filename, is_gcode=True, rename_object=False)
+        if ret_val == 'fail':
+            return 'fail'
+
+        # remember the folder for the next export
+        self.app.options['tools_laser_last_export_folder'] = os.path.dirname(filename)
 
 
 class LaserUI:
