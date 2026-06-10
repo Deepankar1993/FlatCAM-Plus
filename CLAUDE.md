@@ -18,6 +18,9 @@ pip install -r requirements.txt
 # Linux install (Ubuntu-like): installs system deps then the app
 make install_dependencies
 make install
+
+# Portable Windows build (PyInstaller) -> dist\FlatCAM_Evo\FlatCAM_Evo.exe
+.\build_windows.ps1
 ```
 
 There is **no test suite, no linter config, and no packaging config** (no tests/, pytest.ini, pyproject.toml, setup.py). Verification is manual: run the app. The default/PR branch is `mstanciu_Beta_8.995`, not master/main.
