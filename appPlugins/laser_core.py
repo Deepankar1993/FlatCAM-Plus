@@ -1,6 +1,7 @@
 # Qt-free core logic for the Laser plugin. Importable in a headless context.
 import json
 import logging
+import re
 from copy import deepcopy
 
 log = logging.getLogger('base')
@@ -70,3 +71,32 @@ def build_laser_tools_dict(geo_options, params, solid_geometry):
             'solid_geometry': solid_geometry,
         }
     }
+
+
+_LASER_ON_RE = re.compile(r'^\s*M0?[34]\b', re.IGNORECASE)
+_LASER_OFF_RE = re.compile(r'^\s*M0?5\b', re.IGNORECASE)
+
+
+def repeat_cut_passes(gcode, n_passes):
+    """Repeat the cut body of a laser tool's G-code n_passes times.
+
+    The body spans from the first laser-on line (M3/M4) through the last laser-off
+    line (M5). Returns (new_gcode, ok); ok is False (gcode returned unchanged) when
+    the seam markers cannot be located, so the caller can honestly fall back to a
+    single pass.
+    """
+    if not n_passes or int(n_passes) <= 1:
+        return gcode, True
+
+    lines = gcode.splitlines()
+    first_on = next((i for i, ln in enumerate(lines) if _LASER_ON_RE.match(ln)), None)
+    last_off = next((i for i in range(len(lines) - 1, -1, -1) if _LASER_OFF_RE.match(lines[i])), None)
+    if first_on is None or last_off is None or last_off <= first_on:
+        return gcode, False
+
+    header = lines[:first_on]
+    body = lines[first_on:last_off + 1]   # inclusive of laser-on .. laser-off
+    footer = lines[last_off + 1:]
+
+    new_lines = header + body * int(n_passes) + footer
+    return "\n".join(new_lines) + ("\n" if gcode.endswith("\n") else ""), True
