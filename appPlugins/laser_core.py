@@ -1,6 +1,7 @@
 # Qt-free core logic for the Laser plugin. Importable in a headless context.
 import json
 import logging
+from copy import deepcopy
 
 log = logging.getLogger('base')
 
@@ -31,3 +32,41 @@ def load_laser_presets(path):
     except Exception as e:
         log.warning("laser_core.load_laser_presets(): could not load %s (%s), using built-in." % (path, e))
     return list(BUILTIN_PRESETS)
+
+
+# a tiny non-zero marker diameter; laser uses zero offset so the value only labels the tool
+LASER_MARKER_DIA = 0.1
+
+
+def build_laser_tools_dict(geo_options, params, solid_geometry):
+    """Build the single-tool dict that GeometryObject.mtool_gen_cncjob expects.
+
+    geo_options: the source geometry's options dict (provides valid tools_mill_* defaults).
+    params: dict with keys power_in_app(bool), power_pct, power_max, speed,
+            air_assist(bool), laser_mode('M3'|'M4').
+    solid_geometry: the geometry to trace.
+    """
+    data = {k: v for k, v in geo_options.items() if str(k).startswith('tools_mill_')}
+
+    data['tools_mill_ppname_g'] = 'GRBL_laser_air_assist' if params['air_assist'] else 'GRBL_laser'
+    data['tools_mill_feedrate'] = params['speed']
+    data['tools_mill_laser_on'] = params['laser_mode']
+    data['tools_mill_min_power'] = 0
+    data['tools_mill_multidepth'] = False
+    data['tools_mill_extracut'] = False
+    data['tools_mill_offset_type'] = 0  # Path -> zero offset, no UI dependency
+
+    if params['power_in_app']:
+        s_val = int(round(float(params['power_pct']) / 100.0 * float(params['power_max'])))
+        data['tools_mill_spindlespeed'] = s_val
+    else:
+        # empty -> preprocessor emits a bare M3/M4 so LaserGRBL controls power
+        data['tools_mill_spindlespeed'] = ''
+
+    return {
+        1: {
+            'tooldia': LASER_MARKER_DIA,
+            'data': deepcopy(data),
+            'solid_geometry': solid_geometry,
+        }
+    }
