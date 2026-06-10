@@ -1011,6 +1011,7 @@ class App(QtCore.QObject):
         self.distance_min_tool = None
         self.panelize_tool = None
         self.film_tool = None
+        self.laser_tool = None
         self.paste_tool = None
         self.calculator_tool = None
         self.rules_tool = None
@@ -1662,6 +1663,9 @@ class App(QtCore.QObject):
         self.film_tool = Film(self)
         self.film_tool.install(icon=QtGui.QIcon(self.resource_location + '/film32.png'))
 
+        self.laser_tool = ToolLaser(self)
+        self.laser_tool.install(icon=QtGui.QIcon(self.resource_location + '/cutpath32.png'))
+
         self.paste_tool = SolderPaste(self)
         self.paste_tool.install(icon=QtGui.QIcon(self.resource_location + '/solderpastebis32.png'))
 
@@ -1773,6 +1777,7 @@ class App(QtCore.QObject):
             self.distance_min_tool,
             self.panelize_tool,
             self.film_tool,
+            self.laser_tool,
             self.paste_tool,
             self.calculator_tool,
             self.rules_tool,

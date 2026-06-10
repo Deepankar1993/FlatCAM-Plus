@@ -49,3 +49,5 @@ from appPlugins.ToolPunchGerber import ToolPunchGerber
 from appPlugins.ToolInvertGerber import ToolInvertGerber
 from appPlugins.ToolMarkers import ToolMarkers
 from appPlugins.ToolEtchCompensation import ToolEtchCompensation
+
+from appPlugins.ToolLaser import ToolLaser
