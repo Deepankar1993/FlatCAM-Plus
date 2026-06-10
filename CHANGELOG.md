@@ -10,6 +10,7 @@ CHANGELOG for FlatCAM Evo beta
 
 10.06.2026
 
+- added a new Geometry/Excellon preprocessor "GRBL_laser_air_assist" for GRBL 1.1 controllers (CNC 3018 and similar) fitted with a diode laser module that has air assist; it is the GRBL laser preprocessor plus air assist control (M8 to turn the air pump ON at job start, M9 to turn it OFF at job end - wire the pump relay to the controller coolant/flood output)
 - bumped version to 8.996
 - fixed a hard crash when opening a project made with an older app version (e.g. 8.994): the "Legacy Project" question dialog was created from a worker thread which is not allowed in Qt
 - legacy projects are now converted automatically on load (no more question dialog); the project is marked as modified so saving it stores it in the current format
