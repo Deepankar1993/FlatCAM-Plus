@@ -75,15 +75,25 @@ def build_laser_tools_dict(geo_options, params, solid_geometry):
 
 _LASER_ON_RE = re.compile(r'^\s*M0?[34]\b', re.IGNORECASE)
 _LASER_OFF_RE = re.compile(r'^\s*M0?5\b', re.IGNORECASE)
+# Positioning lines the engine emits right before the first laser-on:
+# - a rapid move ("G0 ..." / "G00 ...") to the cut start point
+_PRE_CUT_RAPID_RE = re.compile(r'^\s*G0?0\b', re.IGNORECASE)
+# - a feedrate-only line ("G1 F300.00" / "G01 F300.00"), no coordinates
+_PRE_CUT_FEED_RE = re.compile(r'^\s*G0?1\s+F[\d.]+\s*$', re.IGNORECASE)
 
 
 def repeat_cut_passes(gcode, n_passes):
     """Repeat the cut body of a laser tool's G-code n_passes times.
 
     The body spans from the first laser-on line (M3/M4) through the last laser-off
-    line (M5). Returns (new_gcode, ok); ok is False (gcode returned unchanged) when
-    the seam markers cannot be located, so the caller can honestly fall back to a
-    single pass.
+    line (M5), extended backwards to include the contiguous positioning rapid /
+    feedrate-only lines that immediately precede the first laser-on. Including
+    those lines makes every pass rapid back to the cut start with the laser off
+    (the previous pass's body ends with M5), so open paths are re-traced from
+    their true start instead of burning a stray segment from the previous pass's
+    end point. Returns (new_gcode, ok); ok is False (gcode returned unchanged)
+    when the seam markers cannot be located, so the caller can honestly fall
+    back to a single pass.
     """
     if not n_passes or int(n_passes) <= 1:
         return gcode, True
@@ -94,8 +104,15 @@ def repeat_cut_passes(gcode, n_passes):
     if first_on is None or last_off is None or last_off <= first_on:
         return gcode, False
 
-    header = lines[:first_on]
-    body = lines[first_on:last_off + 1]   # inclusive of laser-on .. laser-off
+    # pull the contiguous pre-cut positioning/feedrate lines into the body
+    body_start = first_on
+    while body_start > 0 and (
+            _PRE_CUT_RAPID_RE.match(lines[body_start - 1]) or
+            _PRE_CUT_FEED_RE.match(lines[body_start - 1])):
+        body_start -= 1
+
+    header = lines[:body_start]
+    body = lines[body_start:last_off + 1]   # pre-cut rapid .. laser-on .. laser-off
     footer = lines[last_off + 1:]
 
     new_lines = header + body * int(n_passes) + footer
