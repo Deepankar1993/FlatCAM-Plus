@@ -1,6 +1,7 @@
 *.pyc
 .idea/
 tests/tmp/
+tests_laser/
 build/
 dist/
 /venv/

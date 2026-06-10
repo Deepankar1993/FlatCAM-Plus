@@ -505,6 +505,19 @@ class AppDefaults:
         "tools_mill_optimization_type": 'R',
         "tools_mill_search_time": 3,
 
+        # ######################################################################
+        # ################ Laser Plugin ########################################
+        # ######################################################################
+        "tools_laser_power_max": 1000,
+        "tools_laser_power_pct": 100,
+        "tools_laser_power_in_app": True,
+        "tools_laser_speed": 300,
+        "tools_laser_passes": 1,
+        "tools_laser_air_assist": True,
+        "tools_laser_mode": "M4",
+        "tools_laser_preset": "PCB — surface mark",
+        "tools_laser_last_export_folder": "",
+
         # Autolevelling Plugin
         "tools_al_plot_points": False,
         "tools_al_avoid_exc_holes": False,
