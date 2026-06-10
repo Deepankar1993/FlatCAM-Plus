@@ -64,7 +64,7 @@ if platform.architecture()[0] == '64bit':
     try:
         from ortools.constraint_solver import pywrapcp      # noqa
         from ortools.constraint_solver import routing_enums_pb2     # noqa
-    except ModuleNotFoundError:
+    except ImportError:
         HAS_ORTOOLS = False
 
 fcTranslate.apply_language('strings')

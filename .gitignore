@@ -2,8 +2,9 @@
 .idea/
 tests/tmp/
 build/
+dist/
 /venv/
-/venv/
+/.venv-build/
 
 # General for macOS
 .DS_Store
