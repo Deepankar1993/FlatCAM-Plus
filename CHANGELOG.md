@@ -18,6 +18,7 @@ CHANGELOG for FlatCAM Evo beta
 - added a Windows installer (Inno Setup script installer_windows.iss, built via build_windows.ps1 -Installer): per-user install with Start Menu shortcut, optional desktop icon and uninstaller
 - Laser plugin: added a "Beam width" parameter (the laser spot size); it is now used as the tool diameter everywhere, fixing the misleading default 2.4mm tool shown on the internal laser trace geometry
 - Laser plugin: added a "Pass overlap" parameter; at 0% multiple passes burn the same line (deeper cut, as before), above 0% every pass is offset sideways by the beam width minus the overlap, widening the cut (e.g. to widen a PCB isolation gap)
+- updated the About dialog links (development/download/issue tracker now point to this fork on GitHub) and added the fork maintainer; rewrote README.md with the fork's features and current install/build instructions
 
 10.06.2026
 

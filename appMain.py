@@ -2992,9 +2992,9 @@ class App(QtCore.QObject):
                     "{title}<BR>"
                     "<BR>"
                     "<BR>"
-                    "<a href = \"https://bitbucket.org/jpcgt/flatcam/src/Beta/\"><B>{devel}</B></a><BR>"
-                    "<a href = \"https://bitbucket.org/jpcgt/flatcam/downloads/\"><b>{down}</B></a><BR>"
-                    "<a href = \"https://bitbucket.org/jpcgt/flatcam/issues?status=new&status=open/\">"
+                    "<a href = \"https://github.com/Deepankar1993/flatcam-home\"><B>{devel}</B></a><BR>"
+                    "<a href = \"https://github.com/Deepankar1993/flatcam-home/releases\"><b>{down}</B></a><BR>"
+                    "<a href = \"https://github.com/Deepankar1993/flatcam-home/issues\">"
                     "<B>{issue}</B></a><BR>".format(
                         title=_("PCB Manufacturing files Viewer/Editor with Plugins"),
                         devel=_("Development"),
@@ -3008,7 +3008,8 @@ class App(QtCore.QObject):
                 tab_widget = QtWidgets.QTabWidget()
                 description_label = FCLabel(
                     "FlatCAM Evo {version} {beta} ({date}) - {arch}<br>"
-                    "<a href = \"http://flatcam.org/\">http://flatcam.org</a><br>".format(
+                    "<a href = \"https://github.com/Deepankar1993/flatcam-home\">"
+                    "github.com/Deepankar1993/flatcam-home</a><br>".format(
                         version=version,
                         beta=('BETA' if beta else ''),
                         date=version_date,
@@ -3372,11 +3373,16 @@ class App(QtCore.QObject):
                 self.prog_grid_lay.addWidget(FCLabel('%s' % "Marius Stanciu"), 2, 0)
                 self.prog_grid_lay.addWidget(FCLabel('%s' % _("FlatCAM Evo Author/Maintainer")), 2, 1)
                 self.prog_grid_lay.addWidget(FCLabel('%s' % "<marius_adrian@yahoo.com>"), 2, 2)
-                self.prog_grid_lay.addWidget(FCLabel(''), 3, 0)
+
+                # This fork's maintainer
+                self.prog_grid_lay.addWidget(FCLabel('%s' % "Deepankar Singh"), 3, 0)
+                self.prog_grid_lay.addWidget(FCLabel('%s' % _("Maintainer of this fork")), 3, 1)
+                self.prog_grid_lay.addWidget(FCLabel('%s' % "<deepankar.singh.official@gmail.com>"), 3, 2)
+                self.prog_grid_lay.addWidget(FCLabel(''), 4, 0)
 
                 # randomize the order of the programmers at each launch
                 random.shuffle(programmers)
-                line = 4
+                line = 5
                 for prog in programmers:
                     self.prog_grid_lay.addWidget(FCLabel('%s' % prog['name']), line, 0)
                     self.prog_grid_lay.addWidget(FCLabel('%s' % prog['description']), line, 1)
