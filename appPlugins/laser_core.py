@@ -39,13 +39,15 @@ def load_laser_presets(path):
 LASER_MARKER_DIA = 0.1
 
 
-def build_laser_tools_dict(geo_options, params, solid_geometry):
-    """Build the single-tool dict that GeometryObject.mtool_gen_cncjob expects.
+def build_laser_tools_dict(geo_options, params, solid_geometry, beam_width=LASER_MARKER_DIA):
+    """Build the single-tool dict that the milling engine expects.
 
     geo_options: the source geometry's options dict (provides valid tools_mill_* defaults).
     params: dict with keys power_in_app(bool), power_pct, power_max, speed,
             air_assist(bool), laser_mode('M3'|'M4').
     solid_geometry: the geometry to trace.
+    beam_width: the laser spot diameter; used as the tool diameter (laser cuts with
+                zero offset, so the value only labels the tool and sizes the plot).
     """
     data = {k: v for k, v in geo_options.items() if str(k).startswith('tools_mill_')}
 
@@ -56,6 +58,8 @@ def build_laser_tools_dict(geo_options, params, solid_geometry):
     data['tools_mill_multidepth'] = False
     data['tools_mill_extracut'] = False
     data['tools_mill_offset_type'] = 0  # Path -> zero offset, no UI dependency
+    # the engine reads the tool diameter from the data dict
+    data['tools_mill_tooldia'] = beam_width
 
     if params['power_in_app']:
         s_val = int(round(float(params['power_pct']) / 100.0 * float(params['power_max'])))
@@ -66,11 +70,60 @@ def build_laser_tools_dict(geo_options, params, solid_geometry):
 
     return {
         1: {
-            'tooldia': LASER_MARKER_DIA,
+            'tooldia': beam_width,
             'data': deepcopy(data),
             'solid_geometry': solid_geometry,
         }
     }
+
+
+def flatten_geometry(geometry):
+    """Flatten an arbitrarily nested list of shapely geometries into a flat list."""
+    if geometry is None:
+        return []
+    if isinstance(geometry, (list, tuple)):
+        flat = []
+        for geo in geometry:
+            flat.extend(flatten_geometry(geo))
+        return flat
+    return [geometry]
+
+
+def widen_passes(solid_geometry, beam_width, n_passes, overlap_pct):
+    """Build the geometry for sideways-overlapping passes that widen the cut groove.
+
+    Pass 1 traces the original geometry; every further pass k traces the boundary of
+    the original buffered by k * step, where step = beam_width * (1 - overlap_pct/100).
+    This is what makes the laser remove a band of material (e.g. widening a PCB
+    isolation gap) instead of re-burning the same hairline.
+
+    Returns (geometry_list, ok). ok is False (and the original geometry is returned)
+    when the inputs cannot produce a widened path - the caller should fall back to
+    plain repeated passes.
+    """
+    geoms = flatten_geometry(solid_geometry)
+    n = int(n_passes) if n_passes else 1
+    if n <= 1:
+        return geoms, True
+    if not geoms:
+        return geoms, False
+
+    step = float(beam_width) * (1.0 - float(overlap_pct) / 100.0)
+    if step <= 0:
+        return geoms, False
+
+    try:
+        from shapely.ops import unary_union
+        merged = unary_union(geoms)
+        out = list(geoms)
+        for k in range(1, n):
+            ring = merged.buffer(k * step).boundary
+            if not ring.is_empty:
+                out.append(ring)
+        return out, True
+    except Exception as e:
+        log.warning("laser_core.widen_passes(): could not widen the geometry (%s)." % str(e))
+        return geoms, False
 
 
 _LASER_ON_RE = re.compile(r'^\s*M0?[34]\b', re.IGNORECASE)

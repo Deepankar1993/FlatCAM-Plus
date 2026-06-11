@@ -144,7 +144,9 @@ class ToolLaser(AppTool):
         # parameters from the application defaults
         self.ui.power_entry.set_value(int(self.app.options["tools_laser_power_pct"]))
         self.ui.speed_entry.set_value(float(self.app.options["tools_laser_speed"]))
+        self.ui.beam_entry.set_value(float(self.app.options["tools_laser_beam_width"]))
         self.ui.passes_entry.set_value(int(self.app.options["tools_laser_passes"]))
+        self.ui.overlap_entry.set_value(float(self.app.options["tools_laser_overlap"]))
         self.ui.air_assist_cb.set_value(self.app.options["tools_laser_air_assist"])
         self.ui.mode_radio.set_value(self.app.options["tools_laser_mode"])
 
@@ -188,11 +190,11 @@ class ToolLaser(AppTool):
         """When the power is set in the sender (LaserGRBL), the Power entry is greyed out."""
         self.ui.power_entry.setDisabled(val == 'sender')
 
-    def _resolve_geometry(self, source_obj):
-        """Return a GeometryObject to trace. For a Gerber source create an internal
-        'follow' geometry (the centerline of the Gerber traces)."""
+    def _resolve_geometry(self, source_obj, beam_width):
+        """Return (geometry_object, is_internal) to trace. For a Gerber source create an
+        internal 'follow' geometry (the centerline of the Gerber traces)."""
         if source_obj.kind == 'geometry':
-            return source_obj
+            return source_obj, False
 
         if source_obj.kind == 'gerber':
             trace_name = '%s_laser_trace' % source_obj.obj_options['name']
@@ -213,9 +215,54 @@ class ToolLaser(AppTool):
 
             if geo is None:
                 self.app.inform.emit('[ERROR_NOTCL] %s' % _("Could not create the laser trace geometry."))
-            return geo
+                return None, False
+
+            # follow_geo() labels the trace with the default milling tool diameter
+            # (e.g. 2.4mm) which is misleading for a laser; use the beam width
+            geo.obj_options['tools_mill_tooldia'] = beam_width
+            for tool_uid in geo.tools:
+                geo.tools[tool_uid]['tooldia'] = self.app.dec_format(float(beam_width), self.decimals)
+                geo.tools[tool_uid]['data']['tools_mill_tooldia'] = beam_width
+            return geo, True
 
         self.app.inform.emit('[ERROR_NOTCL] %s' % _("Select a Gerber or Geometry object."))
+        return None, False
+
+    def _make_widened_geometry(self, base_name, widened_geometry, beam_width):
+        """Create an internal multi-geo Geometry object holding the widened (sideways
+        overlapping passes) geometry, so the generation engine traces it on both of
+        its code paths."""
+        widen_name = '%s_laser_widen' % base_name
+        decimals = self.decimals
+
+        def widen_init(new_obj, app_obj):
+            new_obj.multigeo = True
+            new_obj.solid_geometry = widened_geometry
+            new_obj.obj_options['tools_mill_tooldia'] = beam_width
+
+            default_data = {}
+            for opt_key, opt_val in app_obj.options.items():
+                if opt_key.find('geometry_') == 0:
+                    default_data[opt_key[len('geometry_'):]] = opt_val
+                if opt_key.find('tools_mill_') == 0:
+                    default_data[opt_key] = opt_val
+            default_data['tools_mill_tooldia'] = beam_width
+            default_data['name'] = widen_name
+
+            new_obj.tools = {
+                1: {
+                    'tooldia': app_obj.dec_format(float(beam_width), decimals),
+                    'data': default_data,
+                    'solid_geometry': widened_geometry
+                }
+            }
+
+        names_before = set(self.app.collection.get_names())
+        self.app.app_obj.new_object("geometry", widen_name, widen_init)
+        for new_name in set(self.app.collection.get_names()) - names_before:
+            candidate = self.app.collection.get_by_name(new_name)
+            if candidate is not None and candidate.kind == 'geometry':
+                return candidate
         return None
 
     def on_generate(self):
@@ -226,17 +273,45 @@ class ToolLaser(AppTool):
             self.app.inform.emit('[ERROR_NOTCL] %s: %s' % (_("Object not found"), str(obj_name)))
             return
 
-        geo = self._resolve_geometry(source_obj)
-        if geo is None:
-            return
-
         # laser parameters from the UI
         power_in_app = self.ui.power_source_radio.get_value() == 'app'
         power_pct = self.ui.power_entry.get_value()
         speed = self.ui.speed_entry.get_value()
+        beam_width = float(self.ui.beam_entry.get_value())
         n_passes = int(self.ui.passes_entry.get_value())
+        overlap = float(self.ui.overlap_entry.get_value())
         air_assist = self.ui.air_assist_cb.get_value()
         laser_mode = self.ui.mode_radio.get_value()
+
+        geo, is_internal = self._resolve_geometry(source_obj, beam_width)
+        if geo is None:
+            return
+
+        # with an overlap above 0% the passes widen the cut sideways: replace the
+        # geometry with offset contours and trace the result a single time
+        repeat_passes = n_passes
+        if n_passes > 1 and overlap > 0:
+            widened, ok = laser_core.widen_passes(geo.solid_geometry, beam_width, n_passes, overlap)
+            if ok:
+                if is_internal:
+                    # the trace object is ours; let it hold (and show) the widened passes
+                    geo.solid_geometry = widened
+                    for tool_uid in geo.tools:
+                        geo.tools[tool_uid]['solid_geometry'] = widened
+                else:
+                    # do not touch the user's object; widen into an internal geometry
+                    widen_geo = self._make_widened_geometry(
+                        source_obj.obj_options['name'], widened, beam_width)
+                    if widen_geo is None:
+                        self.app.inform.emit(
+                            '[ERROR_NOTCL] %s' % _("Could not create the widened laser geometry."))
+                        return
+                    geo = widen_geo
+                repeat_passes = 1
+            else:
+                self.app.inform.emit(
+                    '[WARNING_NOTCL] %s' % _("Could not widen the passes; the passes will "
+                                             "burn the same line instead."))
 
         params = {
             'power_in_app': power_in_app,
@@ -247,13 +322,12 @@ class ToolLaser(AppTool):
             'laser_mode': laser_mode,
         }
 
-        tools_dict = laser_core.build_laser_tools_dict(geo.obj_options, params, geo.solid_geometry)
+        tools_dict = laser_core.build_laser_tools_dict(
+            geo.obj_options, params, geo.solid_geometry, beam_width=beam_width)
 
         # adapt the dict to what the milling engine reads
         for tool_uid in tools_dict:
             tool_data = tools_dict[tool_uid]['data']
-            # the engine takes the tool diameter from the data dict
-            tool_data['tools_mill_tooldia'] = laser_core.LASER_MARKER_DIA
             # the engine expects a number here (the empty string used as the 'power set in
             # the sender' marker would raise in float()/int()); a 0 value makes the laser
             # preprocessors emit a bare M3/M4 so LaserGRBL controls the power
@@ -287,11 +361,12 @@ class ToolLaser(AppTool):
         # the milling engine switches to the Properties tab; come back to this plugin
         self.app.ui.notebook.setCurrentWidget(self.app.ui.plugin_tab)
 
-        # multiple passes: repeat the cut body (laser ON .. laser OFF) of each tool G-code
-        if n_passes > 1:
+        # multiple passes burning the same line: repeat the cut body (laser ON .. laser
+        # OFF) of each tool G-code; not used when the passes were widened sideways
+        if repeat_passes > 1:
             repeated_any = False
             for tool_uid in cncjob.tools:
-                new_gcode, ok = laser_core.repeat_cut_passes(cncjob.tools[tool_uid]['gcode'], n_passes)
+                new_gcode, ok = laser_core.repeat_cut_passes(cncjob.tools[tool_uid]['gcode'], repeat_passes)
                 if ok:
                     cncjob.tools[tool_uid]['gcode'] = new_gcode
                     repeated_any = True
@@ -314,7 +389,9 @@ class ToolLaser(AppTool):
         # remember the used parameters
         self.app.options['tools_laser_power_pct'] = power_pct
         self.app.options['tools_laser_speed'] = speed
+        self.app.options['tools_laser_beam_width'] = beam_width
         self.app.options['tools_laser_passes'] = n_passes
+        self.app.options['tools_laser_overlap'] = overlap
         self.app.options['tools_laser_air_assist'] = air_assist
         self.app.options['tools_laser_mode'] = laser_mode
         self.app.options['tools_laser_power_in_app'] = power_in_app
@@ -493,17 +570,52 @@ class LaserUI:
         param_grid.addWidget(self.speed_label, 6, 0)
         param_grid.addWidget(self.speed_entry, 6, 1)
 
+        # Beam width
+        size_unit = _("mm") if str(self.app.app_units).upper() == 'MM' else _("in")
+        self.beam_label = FCLabel('%s:' % _("Beam width"))
+        self.beam_label.setToolTip(
+            _("The diameter of the laser spot on the material.\n"
+              "Used as the tool size and as the step for overlapping passes.")
+        )
+        self.beam_entry = FCDoubleSpinner(suffix=size_unit, callback=self.confirmation_message)
+        self.beam_entry.set_range(0.0100, 10.0000)
+        self.beam_entry.set_precision(self.decimals)
+        self.beam_entry.setSingleStep(0.01)
+
+        param_grid.addWidget(self.beam_label, 7, 0)
+        param_grid.addWidget(self.beam_entry, 7, 1)
+
         # Passes
         self.passes_label = FCLabel('%s:' % _("Passes"))
         self.passes_label.setToolTip(
-            _("How many times the laser job is repeated.\n"
-              "Useful to cut through thicker materials.")
+            _("How many times the laser traces the job.\n"
+              "With Pass overlap 0% every pass burns the same line\n"
+              "(deeper cut, e.g. to cut through the material).\n"
+              "With Pass overlap above 0% every pass is shifted sideways\n"
+              "by the beam width minus the overlap (wider cut).")
         )
         self.passes_entry = FCSpinner(callback=self.confirmation_message_int)
         self.passes_entry.set_range(1, 100)
 
         param_grid.addWidget(self.passes_label, 8, 0)
         param_grid.addWidget(self.passes_entry, 8, 1)
+
+        # Pass overlap
+        self.overlap_label = FCLabel('%s:' % _("Pass overlap"))
+        self.overlap_label.setToolTip(
+            _("How much a pass overlaps the previous one, as a percentage\n"
+              "of the beam width.\n"
+              "0% -> all passes burn the same line (cut deeper).\n"
+              "Above 0% -> every pass is offset sideways, widening the cut;\n"
+              "useful to widen a PCB isolation gap or engrave thick lines.")
+        )
+        self.overlap_entry = FCDoubleSpinner(suffix='%', callback=self.confirmation_message)
+        self.overlap_entry.set_range(0.0000, 99.0000)
+        self.overlap_entry.set_precision(self.decimals)
+        self.overlap_entry.setSingleStep(5)
+
+        param_grid.addWidget(self.overlap_label, 9, 0)
+        param_grid.addWidget(self.overlap_entry, 9, 1)
 
         # Air assist
         self.air_assist_cb = FCCheckBox('%s' % _("Air assist"))
