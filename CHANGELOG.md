@@ -15,6 +15,7 @@ CHANGELOG for FlatCAM Evo beta
 - laser power can be baked into the G-code by FlatCAM (Power % mapped to the S value via the configurable tools_laser_power_max, default 1000) or left for LaserGRBL to control (bare M3/M4 commands)
 - multiple passes re-trace the cut with the laser re-armed per pass, including the rapid back to the cut start
 - material presets are stored in assets/resources/laser_presets.json and are user-editable
+- added a Windows installer (Inno Setup script installer_windows.iss, built via build_windows.ps1 -Installer): per-user install with Start Menu shortcut, optional desktop icon and uninstaller
 
 10.06.2026
 
