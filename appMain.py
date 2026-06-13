@@ -2988,7 +2988,8 @@ class App(QtCore.QObject):
                 logo.setPixmap(QtGui.QPixmap(self.app.resource_location + '/app256.png'))
 
                 title = FCLabel(
-                    "<font size=8><B>FlatCAM Evo</B></font><BR>"
+                    "<font size=8><B>FlatCAM Plus</B></font><BR>"
+                    "<i>{based}</i><BR>"
                     "{title}<BR>"
                     "<BR>"
                     "<BR>"
@@ -2996,6 +2997,7 @@ class App(QtCore.QObject):
                     "<a href = \"https://github.com/Deepankar1993/FlatCAM-Plus/releases\"><b>{down}</B></a><BR>"
                     "<a href = \"https://github.com/Deepankar1993/FlatCAM-Plus/issues\">"
                     "<B>{issue}</B></a><BR>".format(
+                        based=_("based on FlatCAM Evo"),
                         title=_("PCB Manufacturing files Viewer/Editor with Plugins"),
                         devel=_("Development"),
                         down=_("DOWNLOAD"),
@@ -3007,7 +3009,7 @@ class App(QtCore.QObject):
 
                 tab_widget = QtWidgets.QTabWidget()
                 description_label = FCLabel(
-                    "FlatCAM Evo {version} {beta} ({date}) - {arch}<br>"
+                    "FlatCAM Plus {version} {beta} ({date}) - {arch}<br>"
                     "<a href = \"https://github.com/Deepankar1993/FlatCAM-Plus\">"
                     "github.com/Deepankar1993/FlatCAM-Plus</a><br>".format(
                         version=version,
@@ -7164,7 +7166,7 @@ class App(QtCore.QObject):
         # main Items categories
         general_cat = d_properties_tw.addParent(root, _('General'), expanded=True, color=p_color, font=font)
         d_properties_tw.addChild(parent=general_cat,
-                                 title=['%s:' % _("Name"), '%s' % _("FlatCAM Evo")], column1=True)
+                                 title=['%s:' % _("Name"), '%s' % _("FlatCAM Plus")], column1=True)
         d_properties_tw.addChild(parent=general_cat,
                                  title=['%s:' % _("Version"), '%s' % str(self.version)], column1=True)
         d_properties_tw.addChild(parent=general_cat,

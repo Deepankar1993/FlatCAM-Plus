@@ -2011,7 +2011,7 @@ class MainGUI(QtWidgets.QMainWindow):
         self.app_icon.addFile(self.app.resource_location + '/app256.png', QtCore.QSize(256, 256))
         self.setWindowIcon(self.app_icon)
 
-        self.setWindowTitle('FlatCAM Evo %s %s - %s' %
+        self.setWindowTitle('FlatCAM Plus %s %s - %s' %
                             (self.app.version,
                              ('BETA' if self.app.beta else ''),
                              platform.architecture()[0])
@@ -2232,7 +2232,7 @@ class MainGUI(QtWidgets.QMainWindow):
         :param name: String that store the project path and project name
         :return: None
         """
-        title = 'FlatCAM Evo %s %s - %s - [%s]    %s' % (
+        title = 'FlatCAM Plus %s %s - %s - [%s]    %s' % (
             self.app.version, ('BETA' if self.app.beta else ''), platform.architecture()[0], self.app.engine, name)
         self.setWindowTitle(title)
 

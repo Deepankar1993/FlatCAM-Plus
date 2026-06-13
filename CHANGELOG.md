@@ -20,6 +20,7 @@ CHANGELOG for FlatCAM Evo beta
 - Laser plugin: added a "Pass overlap" parameter; at 0% multiple passes burn the same line (deeper cut, as before), above 0% every pass is offset sideways by the beam width minus the overlap, widening the cut (e.g. to widen a PCB isolation gap)
 - updated the About dialog links (development/download/issue tracker now point to this fork on GitHub) and added the fork maintainer; rewrote README.md with the fork's features and current install/build instructions
 - rebranded to "FlatCAM Plus": updated the splash screen image (light and dark themes) and the README title; the repository was renamed to FlatCAM-Plus
+- the main window title, the About dialog header and the system info report now read "FlatCAM Plus" (the About dialog keeps a "based on FlatCAM Evo" credit; settings keys and data folders are unchanged so existing preferences are preserved)
 
 10.06.2026
 
