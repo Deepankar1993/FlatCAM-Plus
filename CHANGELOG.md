@@ -21,6 +21,7 @@ CHANGELOG for FlatCAM Evo beta
 - updated the About dialog links (development/download/issue tracker now point to this fork on GitHub) and added the fork maintainer; rewrote README.md with the fork's features and current install/build instructions
 - rebranded to "FlatCAM Plus": updated the splash screen image (light and dark themes) and the README title; the repository was renamed to FlatCAM-Plus
 - the main window title, the About dialog header and the system info report now read "FlatCAM Plus" (the About dialog keeps a "based on FlatCAM Evo" credit; settings keys and data folders are unchanged so existing preferences are preserved)
+- the build artifacts and the Windows installer (display name, Start Menu entry, file names, exe) are now "FlatCAM Plus"; added a FlatCAM Plus copyright line to the LICENSE shown on the installer's License Agreement page, above the FlatCAM Evo and FlatCAM credits
 
 10.06.2026
 
