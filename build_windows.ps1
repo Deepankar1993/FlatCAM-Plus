@@ -1,8 +1,8 @@
 # Builds a portable Windows distribution of FlatCAM Evo using PyInstaller.
-# Output: dist\FlatCAM_Evo\FlatCAM_Evo.exe
+# Output: dist\FlatCAM_Plus\FlatCAM_Plus.exe
 # With -Installer, additionally compiles the Inno Setup installer
 # (requires Inno Setup 6: winget install -e --id JRSoftware.InnoSetup):
-# dist\FlatCAM_Evo_<version>_beta_setup.exe
+# dist\FlatCAM_Plus_<version>_beta_setup.exe
 param(
     [switch]$Installer
 )
@@ -31,9 +31,9 @@ Get-Content (Join-Path $root 'requirements.txt') |
 # flatcam.py and appMain.py look for config\configuration.txt next to the
 # dist root first (this is also where portable-mode settings are written),
 # so place a copy outside _internal as well.
-Copy-Item -Recurse -Force (Join-Path $root 'config') (Join-Path $root 'dist\FlatCAM_Evo\config')
+Copy-Item -Recurse -Force (Join-Path $root 'config') (Join-Path $root 'dist\FlatCAM_Plus\config')
 
-Write-Host "Build complete: $(Join-Path $root 'dist\FlatCAM_Evo\FlatCAM_Evo.exe')"
+Write-Host "Build complete: $(Join-Path $root 'dist\FlatCAM_Plus\FlatCAM_Plus.exe')"
 
 if ($Installer) {
     $iscc = @(
@@ -45,5 +45,5 @@ if ($Installer) {
         throw "Inno Setup 6 not found. Install it with: winget install -e --id JRSoftware.InnoSetup"
     }
     & $iscc (Join-Path $root 'installer_windows.iss')
-    Write-Host "Installer complete: $(Join-Path $root 'dist')\FlatCAM_Evo_*_setup.exe"
+    Write-Host "Installer complete: $(Join-Path $root 'dist')\FlatCAM_Plus_*_setup.exe"
 }

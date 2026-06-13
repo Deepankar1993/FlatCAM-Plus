@@ -19,7 +19,7 @@ pip install -r requirements.txt
 make install_dependencies
 make install
 
-# Portable Windows build (PyInstaller) -> dist\FlatCAM_Evo\FlatCAM_Evo.exe
+# Portable Windows build (PyInstaller) -> dist\FlatCAM_Plus\FlatCAM_Plus.exe
 .\build_windows.ps1
 ```
 

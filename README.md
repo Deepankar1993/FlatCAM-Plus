@@ -43,10 +43,10 @@ Works with Python 3.10 or greater (3.11 verified) and PyQt6.
 The easy way - download from the Releases page
 (https://github.com/Deepankar1993/FlatCAM-Plus/releases):
 
-- `FlatCAM_Evo_<version>_setup.exe` (recommended): installer with Start Menu
+- `FlatCAM_Plus_<version>_setup.exe` (recommended): installer with Start Menu
   shortcut and uninstaller. It installs per-user, no admin rights needed.
-- `FlatCAM_Evo_<version>_Windows_x64.zip`: portable build; unzip and run
-  `FlatCAM_Evo\FlatCAM_Evo.exe`.
+- `FlatCAM_Plus_<version>_Windows_x64.zip`: portable build; unzip and run
+  `FlatCAM_Plus\FlatCAM_Plus.exe`.
 
 From sources:
 

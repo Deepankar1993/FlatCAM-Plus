@@ -53,7 +53,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='FlatCAM_Evo',
+    name='FlatCAM_Plus',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -68,5 +68,5 @@ coll = COLLECT(
     a.datas,
     strip=False,
     upx=False,
-    name='FlatCAM_Evo',
+    name='FlatCAM_Plus',
 )
