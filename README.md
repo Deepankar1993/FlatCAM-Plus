@@ -13,7 +13,7 @@ CAD program, and create G-Code for isolation routing.
 About this fork
 ---------------
 
-This fork (https://github.com/Deepankar1993/flatcam-home) tracks FlatCAM Evo
+This fork (https://github.com/Deepankar1993/FlatCAM-Plus) tracks FlatCAM Evo
 Beta and adds, among other things:
 
 - a **Laser plugin** (Menu -> Plugins -> Laser) aimed at GRBL machines fitted
@@ -41,7 +41,7 @@ Works with Python 3.10 or greater (3.11 verified) and PyQt6.
 **************************************************************************
 
 The easy way - download from the Releases page
-(https://github.com/Deepankar1993/flatcam-home/releases):
+(https://github.com/Deepankar1993/FlatCAM-Plus/releases):
 
 - `FlatCAM_Evo_<version>_setup.exe` (recommended): installer with Start Menu
   shortcut and uninstaller. It installs per-user, no admin rights needed.
@@ -51,8 +51,8 @@ The easy way - download from the Releases page
 From sources:
 
 ```
-git clone https://github.com/Deepankar1993/flatcam-home.git
-cd flatcam-home
+git clone https://github.com/Deepankar1993/FlatCAM-Plus.git
+cd FlatCAM-Plus
 python -m venv venv
 venv\Scripts\python -m pip install -r requirements.txt
 venv\Scripts\python flatcam.py
@@ -72,8 +72,8 @@ Notes:
 - get the sources:
 
 ```
-git clone https://github.com/Deepankar1993/flatcam-home.git
-cd flatcam-home
+git clone https://github.com/Deepankar1993/FlatCAM-Plus.git
+cd FlatCAM-Plus
 ```
 
 - make sure Python 3.10+ and pip are installed, e.g. on Ubuntu-like systems:
@@ -112,8 +112,8 @@ https://gist.github.com/natevw/3e6fc929aff358b38c0a#gistcomment-3111878
 - get the sources:
 
 ```
-git clone https://github.com/Deepankar1993/flatcam-home.git
-cd flatcam-home
+git clone https://github.com/Deepankar1993/FlatCAM-Plus.git
+cd FlatCAM-Plus
 ```
 
 - check that Homebrew is installed:
@@ -146,4 +146,4 @@ https://www.youtube.com/playlist?list=PLVvP2SYRpx-AQgNlfoxw93tXUXon7G94_
 Upstream FlatCAM Evo author contact: Menu -> Help -> About FlatCAM ->
 Programmers -> Marius Stanciu.
 
-Issues with this fork: https://github.com/Deepankar1993/flatcam-home/issues
+Issues with this fork: https://github.com/Deepankar1993/FlatCAM-Plus/issues

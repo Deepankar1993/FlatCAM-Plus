@@ -5,7 +5,7 @@
 #define MyAppName "FlatCAM Evo"
 #define MyAppVersion "8.996"
 #define MyAppPublisher "FlatCAM Evo (Beta)"
-#define MyAppURL "https://github.com/Deepankar1993/flatcam-home"
+#define MyAppURL "https://github.com/Deepankar1993/FlatCAM-Plus"
 #define MyAppExeName "FlatCAM_Evo.exe"
 
 [Setup]

@@ -2992,9 +2992,9 @@ class App(QtCore.QObject):
                     "{title}<BR>"
                     "<BR>"
                     "<BR>"
-                    "<a href = \"https://github.com/Deepankar1993/flatcam-home\"><B>{devel}</B></a><BR>"
-                    "<a href = \"https://github.com/Deepankar1993/flatcam-home/releases\"><b>{down}</B></a><BR>"
-                    "<a href = \"https://github.com/Deepankar1993/flatcam-home/issues\">"
+                    "<a href = \"https://github.com/Deepankar1993/FlatCAM-Plus\"><B>{devel}</B></a><BR>"
+                    "<a href = \"https://github.com/Deepankar1993/FlatCAM-Plus/releases\"><b>{down}</B></a><BR>"
+                    "<a href = \"https://github.com/Deepankar1993/FlatCAM-Plus/issues\">"
                     "<B>{issue}</B></a><BR>".format(
                         title=_("PCB Manufacturing files Viewer/Editor with Plugins"),
                         devel=_("Development"),
@@ -3008,8 +3008,8 @@ class App(QtCore.QObject):
                 tab_widget = QtWidgets.QTabWidget()
                 description_label = FCLabel(
                     "FlatCAM Evo {version} {beta} ({date}) - {arch}<br>"
-                    "<a href = \"https://github.com/Deepankar1993/flatcam-home\">"
-                    "github.com/Deepankar1993/flatcam-home</a><br>".format(
+                    "<a href = \"https://github.com/Deepankar1993/FlatCAM-Plus\">"
+                    "github.com/Deepankar1993/FlatCAM-Plus</a><br>".format(
                         version=version,
                         beta=('BETA' if beta else ''),
                         date=version_date,
