@@ -8,6 +8,13 @@ CHANGELOG for FlatCAM Evo beta
 
 =================================================
 
+13.06.2026
+
+- bumped version to 8.997
+- updated the splash screen version line to v8.997
+
+=================================================
+
 11.06.2026
 
 - added a new "Laser" plugin aimed at new laser users (CNC 3018 + diode laser with air assist, driven by LaserGRBL): pick a Gerber or Geometry object, choose a material preset (or set Power %/Speed/Passes), generate a laser job, then export a .nc file ready for LaserGRBL
