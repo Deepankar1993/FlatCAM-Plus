@@ -8,6 +8,13 @@ CHANGELOG for FlatCAM Evo beta
 
 =================================================
 
+17.06.2026  (8.998)
+
+- bumped version to 8.998
+- updated the splash screen version line to v8.998
+
+=================================================
+
 17.06.2026
 
 - Laser plugin: fixed exported G-code running the whole job at ZERO power. The "Set in LaserGRBL" power mode wrote no S value (bare M3/M4), but GRBL drives the laser by the S word and LaserGRBL streams the file verbatim without injecting power - so the laser never burned. Now an S value is always written: "Set in FlatCAM" bakes the chosen Power %, and "Set in LaserGRBL" bakes full power so the file cuts and the operator trims it live with GRBL's real-time power override.
