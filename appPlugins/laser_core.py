@@ -61,12 +61,18 @@ def build_laser_tools_dict(geo_options, params, solid_geometry, beam_width=LASER
     # the engine reads the tool diameter from the data dict
     data['tools_mill_tooldia'] = beam_width
 
+    # An S (power) value MUST be written into the G-code: GRBL drives the laser by the
+    # S word, and LaserGRBL streams the file verbatim - it does NOT inject power into
+    # bare M3/M4 moves. A file with no S (or S0) runs the whole job at zero power.
+    power_max = float(params['power_max'])
     if params['power_in_app']:
-        s_val = int(round(float(params['power_pct']) / 100.0 * float(params['power_max'])))
-        data['tools_mill_spindlespeed'] = s_val
+        # exact power baked from the chosen percentage
+        s_val = int(round(float(params['power_pct']) / 100.0 * power_max))
     else:
-        # empty -> preprocessor emits a bare M3/M4 so LaserGRBL controls power
-        data['tools_mill_spindlespeed'] = ''
+        # "Set in LaserGRBL": export at full power so the file actually burns; the
+        # operator scales it down live with GRBL's real-time power override slider.
+        s_val = int(round(power_max))
+    data['tools_mill_spindlespeed'] = s_val
 
     return {
         1: {

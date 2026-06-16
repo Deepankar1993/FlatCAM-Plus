@@ -143,6 +143,7 @@ class ToolLaser(AppTool):
 
         # parameters from the application defaults
         self.ui.power_entry.set_value(int(self.app.options["tools_laser_power_pct"]))
+        self.ui.power_max_entry.set_value(int(self.app.options["tools_laser_power_max"]))
         self.ui.speed_entry.set_value(float(self.app.options["tools_laser_speed"]))
         self.ui.beam_entry.set_value(float(self.app.options["tools_laser_beam_width"]))
         self.ui.passes_entry.set_value(int(self.app.options["tools_laser_passes"]))
@@ -276,6 +277,7 @@ class ToolLaser(AppTool):
         # laser parameters from the UI
         power_in_app = self.ui.power_source_radio.get_value() == 'app'
         power_pct = self.ui.power_entry.get_value()
+        power_max = float(self.ui.power_max_entry.get_value())
         speed = self.ui.speed_entry.get_value()
         beam_width = float(self.ui.beam_entry.get_value())
         n_passes = int(self.ui.passes_entry.get_value())
@@ -316,7 +318,7 @@ class ToolLaser(AppTool):
         params = {
             'power_in_app': power_in_app,
             'power_pct': power_pct,
-            'power_max': float(self.app.options['tools_laser_power_max']),
+            'power_max': power_max,
             'speed': speed,
             'air_assist': air_assist,
             'laser_mode': laser_mode,
@@ -324,15 +326,6 @@ class ToolLaser(AppTool):
 
         tools_dict = laser_core.build_laser_tools_dict(
             geo.obj_options, params, geo.solid_geometry, beam_width=beam_width)
-
-        # adapt the dict to what the milling engine reads
-        for tool_uid in tools_dict:
-            tool_data = tools_dict[tool_uid]['data']
-            # the engine expects a number here (the empty string used as the 'power set in
-            # the sender' marker would raise in float()/int()); a 0 value makes the laser
-            # preprocessors emit a bare M3/M4 so LaserGRBL controls the power
-            if tool_data['tools_mill_spindlespeed'] == '':
-                tool_data['tools_mill_spindlespeed'] = 0
 
         out_name = '%s_laser' % source_obj.obj_options['name']
 
@@ -388,6 +381,7 @@ class ToolLaser(AppTool):
 
         # remember the used parameters
         self.app.options['tools_laser_power_pct'] = power_pct
+        self.app.options['tools_laser_power_max'] = power_max
         self.app.options['tools_laser_speed'] = speed
         self.app.options['tools_laser_beam_width'] = beam_width
         self.app.options['tools_laser_passes'] = n_passes
@@ -534,10 +528,11 @@ class LaserUI:
         # Power source
         self.power_source_label = FCLabel('%s:' % _("Power source"))
         self.power_source_label.setToolTip(
-            _("Where the laser power is set:\n"
-              "- 'Set in FlatCAM' -> the power below is written in the G-code\n"
-              "- 'Set in LaserGRBL' -> the G-code has no power value so the\n"
-              "sender application (LaserGRBL) controls the power.")
+            _("Where the laser power is set. Either way an S value is written in the\n"
+              "G-code (GRBL needs it - the laser is off without one):\n"
+              "- 'Set in FlatCAM' -> the Power %% below is baked into every move.\n"
+              "- 'Set in LaserGRBL' -> the job is written at full power; trim it live\n"
+              "  with LaserGRBL's power-override slider while the job runs.")
         )
         self.power_source_radio = RadioSet([{'label': _('Set in FlatCAM'), 'value': 'app'},
                                             {'label': _('Set in LaserGRBL'), 'value': 'sender'}])
@@ -555,6 +550,19 @@ class LaserUI:
 
         param_grid.addWidget(self.power_label, 4, 0)
         param_grid.addWidget(self.power_entry, 4, 1)
+
+        # Max power (S value) - must match the controller's $30 setting
+        self.power_max_label = FCLabel('%s:' % _("Max power (S)"))
+        self.power_max_label.setToolTip(
+            _("The S value that means 100% power, i.e. your GRBL controller's $30\n"
+              "setting (default 1000; some boards use 255). The Power % is scaled\n"
+              "against this, so it must match $30 or the percentage will be wrong.")
+        )
+        self.power_max_entry = FCSpinner(callback=self.confirmation_message_int)
+        self.power_max_entry.set_range(1, 100000)
+
+        param_grid.addWidget(self.power_max_label, 5, 0)
+        param_grid.addWidget(self.power_max_entry, 5, 1)
 
         # Speed
         speed_unit = _("mm/min") if str(self.app.app_units).upper() == 'MM' else _("in/min")
