@@ -274,6 +274,14 @@ class ToolLaser(AppTool):
             self.app.inform.emit('[ERROR_NOTCL] %s: %s' % (_("Object not found"), str(obj_name)))
             return
 
+        # remember the source (Gerber/Geometry) name and a sensible export folder so the
+        # exported .nc defaults to the source's name inside a "Job" folder. FlatCAM does not
+        # keep a per-object path, so use the last folder a file was opened from (the project
+        # folder) as the base - captured now, while it still points at this project.
+        self.laser_source_name = source_obj.obj_options['name']
+        base_dir = self.app.get_last_folder() or self.app.get_last_save_folder()
+        self.laser_job_dir = os.path.join(base_dir, 'Job') if base_dir else None
+
         # laser parameters from the UI
         power_in_app = self.ui.power_source_radio.get_value() == 'app'
         power_pct = self.ui.power_entry.get_value()
@@ -399,14 +407,10 @@ class ToolLaser(AppTool):
             self.app.inform.emit('[WARNING_NOTCL] %s' % _("Generate a laser job first."))
             return
 
-        obj_name = self.laser_cncjob.obj_options['name']
-        last_folder = self.app.options['tools_laser_last_export_folder']
-        if not last_folder or not os.path.isdir(last_folder):
-            last_folder = self.app.get_last_save_folder()
+        dir_file_to_save = self._default_export_filepath()
 
         _filter_ = "G-Code Files (*.nc *.gcode *.ngc);;All Files (*.*)"
         try:
-            dir_file_to_save = last_folder + '/' + str(obj_name) + '.nc'
             filename, _f = FCFileSaveDialog.get_saved_filename(
                 caption=_("Export for LaserGRBL"),
                 directory=dir_file_to_save,
@@ -423,6 +427,33 @@ class ToolLaser(AppTool):
             return
 
         self._export_to_file(filename)
+
+    def _default_export_filepath(self):
+        """Build the default path the Export dialog opens at: a "Job" folder next to the
+        source (created if needed), with a file named after the source Gerber/Geometry."""
+        src_name = getattr(self, 'laser_source_name', None)
+        if src_name:
+            default_name = str(src_name) + '_laser'
+        else:
+            default_name = str(self.laser_cncjob.obj_options['name'])
+
+        target_dir = None
+        job_dir = getattr(self, 'laser_job_dir', None)
+        if job_dir:
+            if not os.path.isdir(job_dir):
+                try:
+                    os.makedirs(job_dir, exist_ok=True)
+                except OSError:
+                    job_dir = None
+            target_dir = job_dir
+        if not target_dir:
+            last_folder = self.app.options['tools_laser_last_export_folder']
+            if last_folder and os.path.isdir(last_folder):
+                target_dir = last_folder
+            else:
+                target_dir = self.app.get_last_save_folder() or ''
+
+        return os.path.join(target_dir, default_name + '.nc')
 
     def _export_to_file(self, filename):
         """Write the generated laser job G-code to the given file, through the same

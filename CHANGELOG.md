@@ -12,6 +12,7 @@ CHANGELOG for FlatCAM Evo beta
 
 - Laser plugin: fixed exported G-code running the whole job at ZERO power. The "Set in LaserGRBL" power mode wrote no S value (bare M3/M4), but GRBL drives the laser by the S word and LaserGRBL streams the file verbatim without injecting power - so the laser never burned. Now an S value is always written: "Set in FlatCAM" bakes the chosen Power %, and "Set in LaserGRBL" bakes full power so the file cuts and the operator trims it live with GRBL's real-time power override.
 - Laser plugin: added a "Max power (S)" field (the controller's $30 value, default 1000; set 255 for boards with $30=255). The Power % is scaled against it, so the percentage now matches the machine instead of assuming 1000.
+- Laser plugin: "Export for LaserGRBL" now defaults to a "Job" folder next to the project (created if missing) and names the file after the source Gerber/Geometry object (e.g. <board>.gbr_laser.nc), instead of the last-used folder with the generic CNCJob name.
 
 =================================================
 
