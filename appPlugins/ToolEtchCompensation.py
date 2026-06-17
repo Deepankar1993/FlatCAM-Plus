@@ -205,6 +205,13 @@ class ToolEtchCompensation(AppTool):
             if factor_value is None:
                 self.app.inform.emit('[ERROR_NOTCL] %s' % _("Missing parameter value."))
                 return
+            if factor_value <= 0:
+                # etch_factor = 1 / factor_value -> a value of 0 crashed with ZeroDivisionError,
+                # and a negative value silently shrank the copper instead of growing it. The Etch
+                # Factor (depth-to-lateral etch ratio) is always a positive, non-zero number.
+                self.app.inform.emit(
+                    '[ERROR_NOTCL] %s' % _("The Etch Factor must be a positive, non-zero number."))
+                return
             etch_factor = 1 / factor_value
             offset = thickness / etch_factor
         elif ratio_type == 'etch_list':

@@ -308,6 +308,39 @@ class PlotCanvas(QtCore.QObject, VisPyCanvas):
             if silent is None:
                 self.fcapp.inform[str, bool].emit(_("HUD disabled."), False)
 
+    def _get_hud_font_metrics(self):
+        """
+        Return the cached (QFontMetrics, font_size) for the HUD, rebuilding only when the
+        configured HUD font size changes. Also caches the fixed label-prefix widths and the
+        line height/spacing so the per-mouse-move path does no font construction.
+        """
+        qsettings = QtCore.QSettings("Open Source", "FlatCAM_EVO")
+        if qsettings.contains("hud_font_size"):
+            fsize = qsettings.value('hud_font_size', type=int)
+        else:
+            fsize = 8
+
+        if getattr(self, '_hud_fsize', None) != fsize or getattr(self, '_hud_font_metrics', None) is None:
+            try:
+                c_font = QtGui.QFont("times", fsize)
+            except Exception:
+                # maybe Unix-like OS's don't have the Times font installed, use whatever is available
+                c_font = QtGui.QFont()
+                c_font.setPointSize(fsize)
+
+            fm = QtGui.QFontMetrics(c_font)
+            self._hud_fsize = fsize
+            self._hud_font = c_font
+            self._hud_font_metrics = fm
+            self._hud_pre1 = fm.horizontalAdvance('Dx:xxx[mm]')
+            self._hud_pre2 = fm.horizontalAdvance('Dy:xxx[mm]')
+            self._hud_pre3 = fm.horizontalAdvance('X:xxxxx[mm]')
+            self._hud_pre4 = fm.horizontalAdvance('Y:xxxxx[mm]')
+            self._hud_line_height = fm.boundingRect('Dx: 0.0 [mm]').height()
+            self._hud_line_spacing = fm.lineSpacing()
+
+        return self._hud_font_metrics, self._hud_fsize
+
     def on_update_text_hud(self, dx=None, dy=None, x=None, y=None):
         """
         Update the text of the location labels from HUD
@@ -336,36 +369,20 @@ class PlotCanvas(QtCore.QObject, VisPyCanvas):
         l4_hud_text = 'Y:   %s [%s]' % (y_dec, units)
         hud_text = '%s\n%s\n\n%s\n%s' % (l1_hud_text, l2_hud_text, l3_hud_text, l4_hud_text)
 
-        # font size
-        qsettings = QtCore.QSettings("Open Source", "FlatCAM_EVO")
-        if qsettings.contains("hud_font_size"):
-            fsize = qsettings.value('hud_font_size', type=int)
-        else:
-            fsize = 8
+        # Font + font-metrics (and the fixed label-prefix widths) are cached and only
+        # rebuilt when the HUD font size changes. Constructing a QFont/QFontMetrics and
+        # re-measuring the fixed prefixes on every mouse move was pure per-frame waste.
+        c_font_metrics, fsize = self._get_hud_font_metrics()
 
-        try:
-            c_font = QtGui.QFont("times", fsize)
-        except Exception:
-            # maybe Unix-like OS's don't have the Times font installed, use whatever is available
-            c_font = QtGui.QFont()
-            c_font.setPointSize(fsize)
+        l1_length = self._hud_pre1 + c_font_metrics.horizontalAdvance(str(dx_dec))
+        l2_length = self._hud_pre2 + c_font_metrics.horizontalAdvance(str(dy_dec))
+        l3_length = self._hud_pre3 + c_font_metrics.horizontalAdvance(str(x_dec))
+        l4_length = self._hud_pre4 + c_font_metrics.horizontalAdvance(str(y_dec))
 
-        c_font_metrics = QtGui.QFontMetrics(c_font)
-
-        l1_length = c_font_metrics.horizontalAdvance('Dx:xxx[mm]') + c_font_metrics.horizontalAdvance(str(dx_dec))
-        l2_length = c_font_metrics.horizontalAdvance('Dy:xxx[mm]') + c_font_metrics.horizontalAdvance(str(dy_dec))
-        l3_length = c_font_metrics.horizontalAdvance('X:xxxxx[mm]') + c_font_metrics.horizontalAdvance(str(x_dec))
-        l4_length = c_font_metrics.horizontalAdvance('Y:xxxxx[mm]') + c_font_metrics.horizontalAdvance(str(y_dec))
-        # l1_length = c_font_metrics.boundingRect(l1_hud_text).width()
-        # l2_length = c_font_metrics.boundingRect(l2_hud_text).width()
-        # l3_length = c_font_metrics.boundingRect(l3_hud_text).width()
-        # l4_length = c_font_metrics.boundingRect(l4_hud_text).width()
-
-        l1_height = c_font_metrics.boundingRect(l1_hud_text).height()
-        # print(self.fcapp.qapp.devicePixelRatio())
+        l1_height = self._hud_line_height
 
         # coordinates and anchors
-        height = (5 * l1_height) + c_font_metrics.lineSpacing() * 1.5 + 10
+        height = (5 * l1_height) + self._hud_line_spacing * 1.5 + 10
         width = max(l1_length, l2_length, l3_length, l4_length) * 1.3  # don't know where the 1.3 comes
         center_x = (width / 2) + 5
         center_y = (height / 2) + 5

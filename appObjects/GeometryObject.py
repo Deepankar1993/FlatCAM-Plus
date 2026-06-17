@@ -367,7 +367,10 @@ class GeometryObject(FlatCAMObj, Geometry):
                 temp_tools[new_key] = val
 
             self.tools.clear()
-            self.tools = deepcopy(temp_tools)
+            # temp_tools already holds independent deep copies (val = deepcopy(...)) and the
+            # originals were just cleared, so a second deepcopy of the whole dict (re-cloning
+            # every tool's solid_geometry on the GUI thread) is pure waste — assign directly.
+            self.tools = temp_tools
 
         if not isinstance(self.ui, GeometryObjectUI):
             self.app.log.debug("Expected a GeometryObjectUI, got %s" % type(self.ui))
@@ -1510,7 +1513,6 @@ class GeometryObject(FlatCAMObj, Geometry):
             return
 
         self.read_form_item('plot')
-        self.plot()
 
         self.ui_disconnect()
         cb_flag = self.ui.plot_cb.isChecked()
@@ -1521,6 +1523,15 @@ class GeometryObject(FlatCAMObj, Geometry):
             else:
                 table_cb.setChecked(False)
         self.ui_connect()
+
+        # Pure show/hide of the whole object — flip the existing shapes' visibility instead
+        # of clearing and rebuilding every tool's geometry (a full re-plot froze the UI for
+        # large/multi-tool geometries). The shape data persists while hidden on both
+        # backends. Fall back to a full plot on any anomaly (e.g. shapes not yet built).
+        try:
+            self.shapes.visible = self.obj_options['plot']
+        except Exception:
+            self.plot()
 
     def on_plot_cb_click_table(self):
         # self.ui.cnc_tools_table.cellWidget(row, 2).widget().setCheckState(QtCore.Qt.Unchecked)

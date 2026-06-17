@@ -8,6 +8,21 @@ CHANGELOG for FlatCAM Evo beta
 
 =================================================
 
+17.06.2026  (performance)
+
+- Performance: the app felt sluggish/laggy across the board. Profiled the hot paths and fixed the pervasive offenders:
+  - Status bar: App.info() forced a full QApplication.processEvents() on EVERY status message (and inform.emit fires constantly - progress, hovers, tool steps, "Ready"). This re-entrantly flushed the entire Qt event queue on each little update, serializing the whole UI. Now throttled to at most once every ~80 ms.
+  - Logging: with the default global_log_verbose=2 every self.log.debug() (hundreds per operation, incl. plot/redraw paths) formatted a timestamp, wrote to the console, AND appended to the Tcl shell QTextEdit (unbounded growth + layout reflow). Console logging now defaults to WARNING (opt into DEBUG via the FLATCAM_DEBUG env var) and the shell echo for info/debug is skipped unless the shell dock is actually visible.
+  - Mouse-move hover effect: replaced the per-object Shapely Polygon + Point.within() (a GEOS allocation + point-in-polygon query for every object, every motion event) with a plain numeric bounding-box test.
+  - HUD overlay: on_update_text_hud rebuilt a QFont + QFontMetrics and re-read QSettings and re-measured the fixed labels on every mouse move; these are now cached and only rebuilt when the HUD font size changes.
+  - CNCJob plotting: plot2() de-duplicated annotation positions with a linear "not in [list]" scan that grew per travel point -> O(n^2) on dense jobs; now uses a set for O(1) membership.
+  - Plot checkbox: toggling the whole-object "Plot" checkbox for Gerber/Geometry objects cleared and rebuilt every shape just to show/hide it (a multi-second freeze on large boards). It now flips the existing shapes' visibility instead.
+  - Selection-drag / hover stutter: the selection, hover and tool utility shape collections were built without options, so every update of their tiny geometry (a single rectangle, refreshed on EVERY mouse-move during a drag) was pickled and shipped to a multiprocessing worker process, with the GUI thread blocking on the IPC result (redraw() -> .wait()). They now compute their buffers inline (no pool round-trip); rendering output is identical. The large object/Gerber collections still use the pool.
+
+- Etch Compensation plugin: fixed a crash and a silent wrong-output case. Entering an Etch Factor of 0 raised ZeroDivisionError (etch_factor = 1 / factor_value); a negative Etch Factor silently shrank the copper instead of growing it. The Etch Factor is now validated as a positive, non-zero number with a clear message (the "Manual offset" mode still allows negative values, as intended).
+
+=================================================
+
 17.06.2026  (8.998)
 
 - bumped version to 8.998
