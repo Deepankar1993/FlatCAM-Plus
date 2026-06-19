@@ -180,6 +180,9 @@ class App(QtCore.QObject):
     # ###############################################################################################################
     version = 8.998
     # version = 1.0
+    # full dotted version, kept in lockstep with the git tag / installer MyAppVersion;
+    # used by Help -> Check for Updates to compare against the newest GitHub release tag
+    version_str = "8.998.5"
     version_date = "2026/6/20"
     beta = True
     engine = '3D'
@@ -7338,8 +7341,8 @@ class App(QtCore.QObject):
     def on_check_for_updates(self):
         """
         Help -> Check for Updates. Queries this fork's GitHub releases and tells the user
-        whether a newer version is available, comparing the newest release's publish date
-        to this build's ``version_date``. Detection only: it never downloads or installs.
+        whether a newer version is available, comparing the newest release's tag version
+        to this build's ``version_str``. Detection only: it never downloads or installs.
 
         Runs on the GUI thread (it is a menu action) with a short timeout and a wait
         cursor, so the result dialog can offer to open the downloads page directly.
@@ -7371,26 +7374,51 @@ class App(QtCore.QObject):
                 _("Could not check for updates.\nPlease check your internet connection and try again."))
             return
 
+        def _ver_tuple(text):
+            # 'v8.998.4-beta' / '8.998.4' -> (8, 998, 4); the pre-release suffix is ignored
+            if not text:
+                return None
+            core = str(text).strip().lstrip('vV')
+            for sep in ('-', '+', ' '):
+                core = core.split(sep)[0]
+            parts = []
+            for chunk in core.split('.'):
+                digits = ''.join(ch for ch in chunk if ch.isdigit())
+                if digits == '':
+                    break
+                parts.append(int(digits))
+            return tuple(parts) if parts else None
+
         def _pub_date(rel):
             try:
                 return datetime.strptime((rel.get('published_at') or '')[:10], "%Y-%m-%d").date()
             except Exception:
                 return None
 
-        candidates = [r for r in releases if isinstance(r, dict) and not r.get('draft') and _pub_date(r)]
+        candidates = [r for r in releases if isinstance(r, dict) and not r.get('draft')]
         if not candidates:
             self.inform.emit('[WARNING_NOTCL] %s' % _("No releases were found to compare against."))
             return
 
-        newest = max(candidates, key=_pub_date)
-        newest_date = _pub_date(newest)
+        # Pick the newest release by VERSION (tag), not by date: publish dates are
+        # unreliable here (UTC-vs-local skew, and several releases can share a day).
+        newest = max(candidates, key=lambda r: ((_ver_tuple(r.get('tag_name')) or ()),
+                                                 (_pub_date(r) or datetime.min.date())))
+        newest_ver = _ver_tuple(newest.get('tag_name'))
+        my_ver = _ver_tuple(getattr(App, 'version_str', None))
 
-        try:
-            my_date = datetime.strptime(str(self.version_date).strip(), "%Y/%m/%d").date()
-        except Exception:
-            my_date = None
+        if my_ver is not None and newest_ver is not None:
+            is_newer = newest_ver > my_ver
+        else:
+            # last-resort fallback only if a version string could not be parsed
+            nd = _pub_date(newest)
+            try:
+                md = datetime.strptime(str(self.version_date).strip(), "%Y/%m/%d").date()
+            except Exception:
+                md = None
+            is_newer = bool(nd and md and nd > md)
 
-        if my_date is not None and newest_date <= my_date:
+        if not is_newer:
             self.inform.emit('[success] %s' % _("You are running the latest version."))
             QtWidgets.QMessageBox.information(
                 self.ui, _("Check for Updates"),
