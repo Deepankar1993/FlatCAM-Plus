@@ -152,6 +152,19 @@ class ToolLaser(AppTool):
         self.ui.air_assist_cb.set_value(self.app.options["tools_laser_air_assist"])
         self.ui.mode_radio.set_value(self.app.options["tools_laser_mode"])
 
+        # populate the preprocessor combo with ONLY laser preprocessors and select one
+        self.ui.pp_laser_combo.clear()
+        laser_pps = sorted(name for name in self.app.preprocessors.keys() if 'laser' in name.lower())
+        self.ui.pp_laser_combo.addItems(laser_pps)
+        for it in range(self.ui.pp_laser_combo.count()):
+            self.ui.pp_laser_combo.setItemData(
+                it, self.ui.pp_laser_combo.itemText(it), QtCore.Qt.ItemDataRole.ToolTipRole)
+        wanted_pp = self.app.options.get("tools_laser_ppname", "GRBL_laser")
+        if wanted_pp in laser_pps:
+            self.ui.pp_laser_combo.set_value(wanted_pp)
+        elif laser_pps:
+            self.ui.pp_laser_combo.set_value(laser_pps[0])
+
         # the preset; selecting it fills the parameters above unless it is 'Custom'
         self.ui.preset_combo.set_value(self.app.options["tools_laser_preset"])
         self.on_preset_changed()
@@ -331,6 +344,7 @@ class ToolLaser(AppTool):
             'speed': speed,
             'air_assist': air_assist,
             'laser_mode': laser_mode,
+            'ppname': self.ui.pp_laser_combo.get_value(),
         }
 
         tools_dict = laser_core.build_laser_tools_dict(
@@ -397,6 +411,7 @@ class ToolLaser(AppTool):
         self.app.options['tools_laser_overlap'] = overlap
         self.app.options['tools_laser_air_assist'] = air_assist
         self.app.options['tools_laser_mode'] = laser_mode
+        self.app.options['tools_laser_ppname'] = self.ui.pp_laser_combo.get_value()
         self.app.options['tools_laser_power_in_app'] = power_in_app
         self.app.options['tools_laser_preset'] = self.ui.preset_combo.get_value()
 
@@ -677,6 +692,17 @@ class LaserUI:
 
         param_grid.addWidget(self.mode_label, 12, 0)
         param_grid.addWidget(self.mode_radio, 12, 1)
+
+        # Preprocessor (laser G-code dialect) - only laser preprocessors are listed
+        self.pp_label = FCLabel('%s:' % _("Preprocessor"))
+        self.pp_label.setToolTip(
+            _("The preprocessor (G-code dialect) used to generate the laser job.\n"
+              "Only laser preprocessors are listed, so the output always uses laser\n"
+              "on/off (M3/M4/M5) commands instead of spindle and Z plunge moves.")
+        )
+        self.pp_laser_combo = FCComboBox()
+        param_grid.addWidget(self.pp_label, 14, 0)
+        param_grid.addWidget(self.pp_laser_combo, 14, 1)
 
         GLay.set_common_column_size([obj_grid, param_grid], 0)
 

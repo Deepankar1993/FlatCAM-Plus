@@ -518,6 +518,7 @@ class AppDefaults:
         "tools_laser_overlap": 0.0,
         "tools_laser_air_assist": True,
         "tools_laser_mode": "M4",
+        "tools_laser_ppname": "GRBL_laser_air_assist",
         "tools_laser_preset": "PCB — surface mark",
         "tools_laser_last_export_folder": "",
 

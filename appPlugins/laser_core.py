@@ -51,7 +51,12 @@ def build_laser_tools_dict(geo_options, params, solid_geometry, beam_width=LASER
     """
     data = {k: v for k, v in geo_options.items() if str(k).startswith('tools_mill_')}
 
-    data['tools_mill_ppname_g'] = 'GRBL_laser_air_assist' if params['air_assist'] else 'GRBL_laser'
+    # Use the laser preprocessor chosen in the Laser tool; fall back to a sensible
+    # GRBL laser default (air-assist variant when air assist is on) if none was passed.
+    ppname = params.get('ppname')
+    if not ppname:
+        ppname = 'GRBL_laser_air_assist' if params['air_assist'] else 'GRBL_laser'
+    data['tools_mill_ppname_g'] = ppname
     data['tools_mill_feedrate'] = params['speed']
     data['tools_mill_laser_on'] = params['laser_mode']
     data['tools_mill_min_power'] = 0
