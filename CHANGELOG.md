@@ -8,6 +8,12 @@ CHANGELOG for FlatCAM Evo beta
 
 =================================================
 
+20.06.2026  (8.998.6 - clean shutdown / process leak)
+
+- Shutdown: fixed FlatCAM_Plus.exe processes (the main app plus its multiprocessing-pool workers) lingering after the window was closed. On quit the app used to recreate the pool during shutdown (whose worker processes and manager threads kept the app alive), it only close()d the pool instead of terminating it, and it waited on worker threads with no timeout so a single stuck task blocked exit forever. The pool is now terminated (not recreated) on quit, pool resets terminate old workers instead of leaking them, and worker-thread shutdown is time-bounded. The app now exits cleanly and its child processes are released.
+
+=================================================
+
 20.06.2026  (8.998.5 - update check fix)
 
 - Check for Updates: fixed the check always reporting "You are running the latest version". It compared the newest release's publish DATE against the build's version_date; since the 8.998.x releases shared a UTC day (and version_date was a day ahead in local time), the build always looked newer than every release. It now compares the release tag version against a precise build version (App.version_str), so newer releases are detected reliably regardless of timezone or same-day releases. NOTE: builds older than 8.998.5 still have the old date-based check and cannot detect this fix on their own - update to 8.998.5 (or newer) once, manually, to get the working updater.
