@@ -8,6 +8,12 @@ CHANGELOG for FlatCAM Evo beta
 
 =================================================
 
+20.06.2026  (8.998.5 - update check fix)
+
+- Check for Updates: fixed the check always reporting "You are running the latest version". It compared the newest release's publish DATE against the build's version_date; since the 8.998.x releases shared a UTC day (and version_date was a day ahead in local time), the build always looked newer than every release. It now compares the release tag version against a precise build version (App.version_str), so newer releases are detected reliably regardless of timezone or same-day releases. NOTE: builds older than 8.998.5 still have the old date-based check and cannot detect this fix on their own - update to 8.998.5 (or newer) once, manually, to get the working updater.
+
+=================================================
+
 20.06.2026  (8.998.4 - plotting, laser, auto-save, UI)
 
 - Plotting: fixed an indefinite hang on "Redrawing all objects...". The VisPy shape-buffer redraw waited on each multiprocessing-pool result with no timeout, so a stalled/dead pool worker (seen on some frozen Windows builds) froze the plot forever with processes never finishing. The wait is now bounded; on timeout the buffer is computed inline and the remaining shapes skip the wait, so a broken pool degrades to inline rendering instead of hanging. (The "3D Compatibility" preference still bypasses the pool entirely.)
