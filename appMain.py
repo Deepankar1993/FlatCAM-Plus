@@ -1431,7 +1431,7 @@ class App(QtCore.QObject):
         # ----- Auto-save crash recovery -----
         if self.options.get('global_autosave') is True:
             self.check_autosave_recovery()
-        self.autosave.create_session_marker()
+            self.autosave.create_session_marker()
 
     # ######################################### INIT FINISHED  #######################################################
     # #################################################################################################################
@@ -7899,10 +7899,7 @@ class App(QtCore.QObject):
             self.autosave.mark_clean_exit()
         else:
             # Keep files: drop only the stale marker so we don't re-prompt next launch
-            try:
-                os.remove(os.path.join(self.data_path, "recovery", "session.lock"))
-            except OSError:
-                pass
+            self.autosave.drop_marker()
 
     def on_defaults2options(self):
         """

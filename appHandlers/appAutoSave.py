@@ -95,6 +95,15 @@ def clear_recovery(data_path):
             pass
 
 
+def clear_marker(data_path):
+    p = _marker_path(data_path)
+    if os.path.exists(p):
+        try:
+            os.remove(p)
+        except OSError:
+            pass
+
+
 class AppAutoSave(QtCore.QObject):
     """
     Owns the auto-save QTimer, recovery snapshots, version rotation and the
@@ -106,6 +115,7 @@ class AppAutoSave(QtCore.QObject):
         self.app = app
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.do_snapshot)
+        self._exiting = False
 
     @property
     def data_path(self):
@@ -139,13 +149,23 @@ class AppAutoSave(QtCore.QObject):
         return read_marker(self.data_path)
 
     def mark_clean_exit(self):
+        self._exiting = True
         try:
             clear_recovery(self.data_path)
         except OSError:
             self.app.log.error("AppAutoSave.mark_clean_exit() failed:\n%s" % traceback.format_exc())
 
+    def drop_marker(self):
+        """Remove only the session marker, keeping snapshots on disk."""
+        try:
+            clear_marker(self.data_path)
+        except OSError:
+            self.app.log.error("AppAutoSave.drop_marker() failed:\n%s" % traceback.format_exc())
+
     # ----- snapshot -----
     def do_snapshot(self):
+        if self._exiting:
+            return
         if not (self.app.block_autosave is False
                 and self.app.should_we_save is True
                 and self.app.save_in_progress is False):
@@ -160,6 +180,8 @@ class AppAutoSave(QtCore.QObject):
         self.app.worker_task.emit({'fcn': self._snapshot_worker, 'params': [path]})
 
     def _snapshot_worker(self, path):
+        if self._exiting:
+            return
         try:
             self.app.f_handlers.save_project(path, silent=True)
             write_marker(self.data_path, path, self.app.project_filename)

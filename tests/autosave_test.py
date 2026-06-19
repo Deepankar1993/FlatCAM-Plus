@@ -51,6 +51,14 @@ def run():
         check(a.list_snapshots(d) == [], "clear_recovery removes snapshots")
         check(a.marker_exists(d) is False, "clear_recovery removes marker")
 
+        # clear_marker removes ONLY the marker, leaving snapshots intact
+        open(a.snapshot_path(d, "20260619_130000"), "w").close()
+        a.write_marker(d, a.newest_snapshot(d), None)
+        a.clear_marker(d)
+        check(a.marker_exists(d) is False, "clear_marker removes marker")
+        check(len(a.list_snapshots(d)) == 1, "clear_marker keeps snapshots")
+        a.clear_recovery(d)  # tidy up for the final missing-marker assertion
+
         check(a.read_marker(d) is None, "read_marker missing -> None")
     finally:
         shutil.rmtree(d, ignore_errors=True)
