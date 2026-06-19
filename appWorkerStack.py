@@ -46,4 +46,12 @@ class WorkerStack(QtCore.QObject):
     def quit(self):
         for thread in self.threads:
             thread.quit()
-            thread.wait()
+            # bounded wait: if a worker is stuck mid-task, don't block shutdown forever
+            # (the OS reaps the thread when the process exits). Without a timeout a single
+            # stuck task would keep the whole application process alive after the window closed.
+            if not thread.wait(3000):
+                try:
+                    thread.terminate()
+                    thread.wait(1000)
+                except Exception:
+                    pass

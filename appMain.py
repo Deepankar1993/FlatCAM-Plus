@@ -1642,16 +1642,36 @@ class App(QtCore.QObject):
 
     def clear_pool(self):
         """
-        Clear the multiprocessing pool and calls garbage collector.
+        Reset the multiprocessing pool: terminate the existing workers and start a fresh
+        pool. Terminating (rather than only close()) makes the old worker processes exit
+        promptly instead of lingering until garbage collection.
 
         :return: None
         """
-        self.pool.close()
+        try:
+            self.pool.terminate()
+            self.pool.join()
+        except Exception:
+            pass
 
         self.pool = Pool(processes=self.options["global_process_number"])
         self.pool_recreated.emit(self.pool)
 
         gc.collect()
+
+    def shutdown_pool(self):
+        """
+        Terminate the multiprocessing pool WITHOUT recreating it. Used on application quit
+        so the worker processes and the pool's manager threads do not linger and keep the
+        main process (and its child FlatCAM_Plus.exe workers) alive after the window closes.
+
+        :return: None
+        """
+        try:
+            self.pool.terminate()
+            self.pool.join()
+        except Exception:
+            pass
 
     def install_tools(self, init_tcl=False):
         """
@@ -3992,7 +4012,9 @@ class App(QtCore.QObject):
 
         # terminate workers
         # self.workers.__del__()
-        self.clear_pool()
+        # terminate the multiprocessing pool (do NOT recreate it on quit, or the new pool's
+        # worker processes and manager threads keep the app alive after the window closes)
+        self.shutdown_pool()
 
         self.workers.quit()
 
