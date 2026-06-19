@@ -180,7 +180,7 @@ class App(QtCore.QObject):
     # ###############################################################################################################
     version = 8.998
     # version = 1.0
-    version_date = "2026/6/17"
+    version_date = "2026/6/20"
     beta = True
     engine = '3D'
 
@@ -194,6 +194,11 @@ class App(QtCore.QObject):
     # ###############################################################################################################
     # URL for update checks and statistics
     version_url = "http://flatcam.org/version"
+
+    # GitHub repository for this fork; used by Help -> Check for Updates
+    github_repo = "Deepankar1993/FlatCAM-Plus"
+    update_api_url = "https://api.github.com/repos/Deepankar1993/FlatCAM-Plus/releases"
+    releases_url = "https://github.com/Deepankar1993/FlatCAM-Plus/releases"
 
     # App URL
     app_url = "http://flatcam.org"
@@ -2018,6 +2023,7 @@ class App(QtCore.QObject):
 
     def connect_menuhelp_signals(self):
         self.ui.menuhelp_about.triggered.connect(self.on_about)
+        self.ui.menuhelp_check_updates.triggered.connect(self.on_check_for_updates)
         self.ui.menuhelp_readme.triggered.connect(self.on_howto)
         self.ui.menuhelp_donate.triggered.connect(lambda: webbrowser.open(self.donate_url))
         self.ui.menuhelp_manual.triggered.connect(lambda: webbrowser.open(self.manual_url))
@@ -7328,6 +7334,81 @@ class App(QtCore.QObject):
             str(data["message"])
         )
         self.message.emit(title, msg, "info")
+
+    def on_check_for_updates(self):
+        """
+        Help -> Check for Updates. Queries this fork's GitHub releases and tells the user
+        whether a newer version is available, comparing the newest release's publish date
+        to this build's ``version_date``. Detection only: it never downloads or installs.
+
+        Runs on the GUI thread (it is a menu action) with a short timeout and a wait
+        cursor, so the result dialog can offer to open the downloads page directly.
+
+        :return: None
+        """
+        from datetime import datetime
+
+        self.log.debug("on_check_for_updates()")
+        self.inform.emit('%s' % _("Checking for updates..."))
+
+        releases = None
+        QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.CursorShape.WaitCursor)
+        try:
+            req = urllib.request.Request(
+                App.update_api_url,
+                headers={'Accept': 'application/vnd.github+json', 'User-Agent': 'FlatCAM-Plus'})
+            with urllib.request.urlopen(req, timeout=8) as f:
+                releases = json.load(f)
+        except Exception as e:
+            self.log.warning("Update check failed: %s" % str(e))
+        finally:
+            QtWidgets.QApplication.restoreOverrideCursor()
+
+        if releases is None:
+            self.inform.emit('[WARNING_NOTCL] %s' % _("Could not check for updates."))
+            QtWidgets.QMessageBox.warning(
+                self.ui, _("Check for Updates"),
+                _("Could not check for updates.\nPlease check your internet connection and try again."))
+            return
+
+        def _pub_date(rel):
+            try:
+                return datetime.strptime((rel.get('published_at') or '')[:10], "%Y-%m-%d").date()
+            except Exception:
+                return None
+
+        candidates = [r for r in releases if isinstance(r, dict) and not r.get('draft') and _pub_date(r)]
+        if not candidates:
+            self.inform.emit('[WARNING_NOTCL] %s' % _("No releases were found to compare against."))
+            return
+
+        newest = max(candidates, key=_pub_date)
+        newest_date = _pub_date(newest)
+
+        try:
+            my_date = datetime.strptime(str(self.version_date).strip(), "%Y/%m/%d").date()
+        except Exception:
+            my_date = None
+
+        if my_date is not None and newest_date <= my_date:
+            self.inform.emit('[success] %s' % _("You are running the latest version."))
+            QtWidgets.QMessageBox.information(
+                self.ui, _("Check for Updates"),
+                _("You are running the latest version of FlatCAM Plus."))
+            return
+
+        rel_name = str(newest.get('name') or newest.get('tag_name') or _("a newer version"))
+        self.inform.emit('[success] %s' % _("A newer version is available."))
+        box = QtWidgets.QMessageBox(self.ui)
+        box.setIcon(QtWidgets.QMessageBox.Icon.Information)
+        box.setWindowTitle(_("Update Available"))
+        box.setText('%s\n\n%s' % (_("A newer version of FlatCAM Plus is available:"), rel_name))
+        box.setInformativeText(_("Open the downloads page to get it?"))
+        box.setStandardButtons(
+            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
+        box.setDefaultButton(QtWidgets.QMessageBox.StandardButton.Yes)
+        if box.exec() == QtWidgets.QMessageBox.StandardButton.Yes:
+            webbrowser.open(App.releases_url)
 
     def on_plotcanvas_setup(self):
         """

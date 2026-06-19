@@ -1290,6 +1290,19 @@ class MainGUI(QtWidgets.QMainWindow):
         )
         self.menuhelp_readme.setStatusTip(_("Show basic how-to instructions."))
 
+        self.menuhelp.addSeparator()
+        self.menuhelp_check_updates = self.menuhelp.addAction(
+            QtGui.QIcon(self.app.resource_location + '/globe16.png'),
+            '%s\t%s' % (_('Check for Updates'), ''))
+        self.menuhelp_check_updates.setToolTip(
+            _("<b>Check for Updates</b><hr>"
+              "<b>What:</b> Checks the project's GitHub releases for a newer version of FlatCAM Plus.<br>"
+              "<b>Use:</b> Run it any time to see whether an update is available; it only reads release "
+              "information and installs nothing.<br>"
+              "<b>Result:</b> A dialog tells you whether you are up to date, or offers to open the downloads page.")
+        )
+        self.menuhelp_check_updates.setStatusTip(_("Check GitHub for a newer version."))
+
         self.menuhelp_about = self.menuhelp.addAction(
             QtGui.QIcon(self.app.resource_location + '/about32.png'),
             '%s\t%s' % (_('About'), ''))
