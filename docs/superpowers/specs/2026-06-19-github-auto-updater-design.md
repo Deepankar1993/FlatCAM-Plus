@@ -144,39 +144,56 @@ UI honest about what it does.
   uninstall key — e.g. a hand-unzipped dist) → treat as `"portable"` (notify-only),
   which is the safe fallback.
 
-### Version-comparison strategy
+### Version-comparison strategy (date-based)
 
-The running version is assembled into a comparable form from `App.version`
-(`8.998`, a float — `appMain.py:181`). The release tag from GitHub is a string
-(`v8.998.1`, `8.999-beta2`, etc.). `AppUpdate` normalizes both:
+The running build cannot encode the "(update N)" patch level: `App.version` is the
+float `8.998` (`appMain.py:181`) and there is **no build/update counter** anywhere in
+the app. The one fine-grained, already-maintained signal the build carries is
+`App.version_date` (`"2026/6/17"`, `appMain.py:183`). GitHub stamps every release with
+an automatic, monotonic `published_at` timestamp. **The updater therefore decides
+"newer" by date, not by version number** (confirmed with the maintainer: release names
+like "FlatCAM Plus 8.998 BETA (update 1)" are not semver and do not map onto the float).
 
-- Strip a leading `v`/`V`.
-- Split on the first `-`/`+` into a **release core** (dotted numerics, e.g. `8.998.1`)
-  and a **pre-release suffix** (e.g. `beta2`).
-- Parse the core into an integer tuple, zero-padding missing components
-  (`8.998` → `(8, 998, 0)`; `8.998.1` → `(8, 998, 1)`).
-- Compare cores as tuples. Equal cores: a version **without** a pre-release suffix is
-  **newer** than one with a suffix (`8.998.1` > `8.998.1-beta2`); two suffixes compare
-  lexically/numerically as a tie-break.
-- Prefer Python's `packaging.version.parse` if importable; otherwise use the
-  hand-rolled parser above (no new hard dependency — `packaging` is commonly present but
-  not guaranteed in the frozen build). Any parse failure → treat as "not newer" and log,
-  so a malformed tag never triggers an update.
+- Parse `App.version_date` with a tolerant `%Y/%m/%d` parse (single-digit month/day, no
+  leading zeros) into a `datetime.date`. A parse failure → treat the build date as
+  unknown and behave conservatively (notify-only at most, never auto-install; log it).
+- Parse each candidate release's `published_at` (ISO-8601 UTC, e.g. `2026-06-18T...Z`)
+  into a `date`. Drafts have a null `published_at` and are already filtered out.
+- A release is **newer iff** its `published_at` date is **strictly greater** than the
+  build's `version_date`. Equal dates → **not newer** (prevents same-day re-prompting).
+- The release **tag** (`v8.998.2-beta`, `vMAJOR.MINOR.PATCH-beta`) and **name**
+  ("FlatCAM Plus 8.998 BETA (update 1)") are used **only** for display and as the
+  identity for "skip this version" (`global_update_skipped_version` stores the tag) —
+  **never** for the newer/older decision.
 
-The running installer version (`installer_windows.iss:6`, `8.998.1`) should track
-`App.version`; the spec recommends keeping `MyAppVersion` and the float in lockstep at
-release time so the comparison is meaningful for installed builds.
+**Why date-based:** the "(update N)" naming cannot be told apart by the `8.998` float, so
+a numeric compare cannot distinguish two updates of the same line. `published_at` vs
+`version_date` is automatic, monotonic across updates, and needs no new version field in
+the app.
+
+**Known limitation:** two releases published on the *same calendar day* are
+indistinguishable by date; the second would not be auto-detected until the next day.
+Acceptable for a once-per-launch desktop check; "skip this version" and the next build's
+date bump cover the gap. (If finer resolution is ever needed, compare the full
+`published_at` timestamp against a build timestamp — out of scope here.)
+
+**Release prerequisite:** every release build MUST bump `App.version_date`
+(`appMain.py:183`) to its build date — this is the existing project convention and is
+exactly what makes date comparison correct. Keeping `installer_windows.iss`
+`MyAppVersion` and the git tag consistent remains good practice for display, but is not
+used for detection.
 
 ### Release / asset selection
 
 1. `GET {update_api_url}` (unauthenticated) → JSON array of releases.
 2. Filter: if `global_update_include_prerelease` is `False`, drop entries where
    `prerelease == true` and drop `draft == true` always.
-3. Sort the remaining by the normalized tag (above); take the newest. (GitHub returns
-   newest-first, but we sort defensively rather than trusting order.)
+3. Sort the remaining by `published_at` (newest first); take the newest. (GitHub
+   returns newest-first, but we sort defensively rather than trusting order.)
 4. If `tag == global_update_skipped_version` → no-op (user chose to skip this exact
    version).
-5. If newest is **not newer** than running version → log "up to date", no UI.
+5. If the newest release's `published_at` date is **not strictly after** the build's
+   `version_date` → log "up to date", no UI.
 6. Else hand `{tag, name, body (release notes), html_url, assets[]}` to the
    behavior dispatcher.
 
@@ -280,9 +297,10 @@ relaunch is driven by `RestartApplications`, not the post-install `[Run]` step.
    download** occurs.
 2. **Up to date:** point at a release equal to/older than `App.version`; confirm a log
    line and **no UI**.
-3. **Version compare:** unit-exercise the normalizer with `8.998` vs `v8.998.1`,
-   `8.998.1` vs `8.998.1-beta2`, `8.999-beta1` vs `8.999-beta2`, and a garbage tag;
-   confirm correct newest selection and that garbage is treated as "not newer".
+3. **Date compare:** unit-exercise the comparator: build `version_date` `2026/6/17`
+   vs release `published_at` `2026-06-18` (newer), `2026-06-17` (equal → not newer),
+   `2026-06-16` (older), and a malformed `version_date`/`published_at` (→ treated as
+   not-newer / notify-only, never auto-install).
 4. **Pre-release toggle:** with `global_update_include_prerelease` off, confirm
    pre-release tags are ignored; on, confirm the newest beta is selected.
 5. **Skip version:** click "Skip this version"; relaunch; confirm the same version no
