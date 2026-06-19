@@ -15,6 +15,12 @@ import threading
 import numpy as np
 from appGUI.VisPyTesselators import GLUTess
 
+# Max seconds to wait on a single multiprocessing-pool shape-buffer result before
+# giving up and computing it inline on the calling thread. A healthy worker returns
+# in milliseconds; a stalled/dead worker (seen on some frozen Windows builds) would
+# otherwise block the redraw forever. See ShapeCollectionVisual.redraw().
+SHAPE_BUFFER_POOL_TIMEOUT = 20
+
 
 # class FlatCAMLineVisual(LineVisual):
 #     def __init__(self, pos=None, color=(0.5, 0.5, 0.5, 1), width=1, connect='strip', method='gl', antialias=False):
@@ -589,16 +595,38 @@ class ShapeCollectionVisual(CompoundVisual):
         # Only one thread can update data
         self.results_lock.acquire(True)
 
+        # Once a pool worker is found to have stalled, stop waiting on the rest and
+        # compute their buffers inline so a broken/hung pool can never freeze the redraw.
+        pool_stalled = False
         for i in list(self.data.keys()) if not indexes else indexes:
             if i in list(self.results.keys()):
                 try:
-                    self.results[i].wait()                                  # Wait for process results
-                    if i in self.data:
-                        self.data[i] = self.results[i].get()[0]             # Store translated data
-                        del self.results[i]
+                    res = self.results[i]
+                    if not pool_stalled:
+                        # Bounded wait: a healthy worker finishes well within this; a
+                        # stalled/dead worker never returns, so we must not wait forever.
+                        res.wait(SHAPE_BUFFER_POOL_TIMEOUT)
+                    if res.ready():
+                        if i in self.data:
+                            self.data[i] = res.get()[0]                     # Store translated data
+                    else:
+                        # Worker stalled -> fall back to inline computation so the UI
+                        # never hangs. Skip waiting on the remaining shapes too.
+                        pool_stalled = True
+                        if i in self.data:
+                            self.data[i] = _update_shape_buffers(self.data[i])
                 except Exception as e:
+                    # Any pool failure -> inline fallback so the shape still renders.
+                    try:
+                        if i in self.data:
+                            self.data[i] = _update_shape_buffers(self.data[i])
+                    except Exception:
+                        pass
                     print("VisPyVisuals.ShapeCollectionVisual.redraw() --> Data error = %s. Indexes = %s" %
                           (str(e), str(indexes)))
+                finally:
+                    if i in self.results:
+                        del self.results[i]
 
         self.results_lock.release()
 
