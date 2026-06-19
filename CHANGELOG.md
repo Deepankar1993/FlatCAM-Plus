@@ -8,6 +8,22 @@ CHANGELOG for FlatCAM Evo beta
 
 =================================================
 
+19.06.2026  (auto-save crash recovery)
+
+- Auto-save / crash recovery: the project is now automatically snapshotted to a
+  recovery folder (`<user data>/recovery/`) in the background.  When enabled
+  (Edit → Preferences → General → "Enable Auto Save"), a snapshot is written on
+  the configured interval (default 30 s; "Auto save timeout" field) and the last
+  N versions are retained ("Keep backups", default 10); older snapshots are
+  pruned automatically.  Snapshots are silent — no "Save As" dialog is triggered
+  even for never-saved (unnamed) projects — and run on a worker thread so the UI
+  stays responsive; a brief "[success] Auto-saved" status-bar indicator confirms
+  each cycle.  On the next launch after an unclean shutdown FlatCAM detects the
+  crash-recovery marker and offers to restore the last auto-saved project, giving
+  the user the choice to accept or discard it.
+
+=================================================
+
 19.06.2026  (detailed tooltips & feature docs)
 
 - Tooltips: expanded the menu and plugin tooltips into proper beginner help. Every menu / editor-menu / right-click action in MainGUI.py now has a detailed tooltip explaining what it is, what it does and how/when to use it (with the keyboard shortcut where applicable), while the status-bar tip stays a short one-liner. All 34 plugin/tool menu actions now carry a 2-4 sentence description (what it produces, how it works, and the workflow: pick input object -> set params -> click -> get output object).
