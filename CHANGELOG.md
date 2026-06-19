@@ -8,6 +8,17 @@ CHANGELOG for FlatCAM Evo beta
 
 =================================================
 
+20.06.2026  (8.998.4 - plotting, laser, auto-save, UI)
+
+- Plotting: fixed an indefinite hang on "Redrawing all objects...". The VisPy shape-buffer redraw waited on each multiprocessing-pool result with no timeout, so a stalled/dead pool worker (seen on some frozen Windows builds) froze the plot forever with processes never finishing. The wait is now bounded; on timeout the buffer is computed inline and the remaining shapes skip the wait, so a broken pool degrades to inline rendering instead of hanging. (The "3D Compatibility" preference still bypasses the pool entirely.)
+- Laser: the Laser tool now has a Preprocessor selector populated with only the laser preprocessors (GRBL/Marlin laser variants), defaulting to GRBL_laser_air_assist. The generated laser job uses the selected dialect instead of the previously hardcoded GRBL_laser, so non-GRBL laser controllers can be targeted.
+- Auto-save: fixed a bug where a failed/corrupt project open left auto-save disabled for the rest of the session. open_project set block_autosave=True and only reset it on the successful-restore path; the parse failure exits (unopenable file, JSON/LZMA parse error, malformed structure) now re-enable auto-save.
+- Help menu: added "Check for Updates", which checks the project's GitHub releases and offers to open the downloads page if a newer version is available (detection only; it never downloads or installs).
+- UI: every menu, editor-menu and right-click context-menu tooltip is now a structured block (bold title + shortcut, then What / Use / Result) instead of a single line.
+- Geometry object: added a Laser launcher button to the Plugins row (alongside Milling/Paint/NCC).
+
+=================================================
+
 19.06.2026  (auto-save crash recovery)
 
 - Auto-save / crash recovery: the project is now automatically snapshotted to a
