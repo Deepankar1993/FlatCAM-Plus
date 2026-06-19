@@ -330,14 +330,26 @@ class GeneralAppPrefGroupUI(OptionsGroupUI):
         self.autosave_entry.set_range(0, 9999999)
         self.autosave_label = FCLabel('%s:' % _('Interval'))
         self.autosave_label.setToolTip(
-            _("Time interval for autosaving. In milliseconds.\n"
-              "The application will try to save periodically but only\n"
-              "if the project was saved manually at least once.\n"
-              "While active, some operations may block this feature.")
+            _("Time interval for autosaving, in milliseconds.\n"
+              "Auto-save writes a crash-recovery snapshot to the\n"
+              "recovery folder; it does not overwrite your project file.")
         )
 
         grid6.addWidget(self.autosave_label, 6, 0)
         grid6.addWidget(self.autosave_entry, 6, 1)
+
+        # Auto Save Keep Backups
+        self.autosave_keep_entry = FCSpinner()
+        self.autosave_keep_entry.set_range(1, 999)
+        self.autosave_keep_entry.setWrapping(True)
+        self.autosave_keep_label = FCLabel('%s:' % _('Keep backups'))
+        self.autosave_keep_label.setToolTip(
+            _("How many auto-save recovery files to keep.\n"
+              "Older ones are deleted automatically.")
+        )
+
+        grid6.addWidget(self.autosave_keep_label, 8, 0)
+        grid6.addWidget(self.autosave_keep_entry, 8, 1)
 
         # self.as_ois = OptionalInputSection(self.autosave_cb, [self.autosave_label, self.autosave_entry], True)
 

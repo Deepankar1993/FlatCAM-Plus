@@ -78,6 +78,7 @@ class PreferencesUIManager(QtCore.QObject):
             "global_save_compressed": self.ui.general_pref_form.general_app_group.save_type_cb,
             "global_autosave": self.ui.general_pref_form.general_app_group.autosave_cb,
             "global_autosave_timeout": self.ui.general_pref_form.general_app_group.autosave_entry,
+            "global_autosave_keep": self.ui.general_pref_form.general_app_group.autosave_keep_entry,
 
             "global_tpdf_tmargin": self.ui.general_pref_form.general_app_group.tmargin_entry,
             "global_tpdf_bmargin": self.ui.general_pref_form.general_app_group.bmargin_entry,
