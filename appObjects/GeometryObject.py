@@ -404,6 +404,7 @@ class GeometryObject(FlatCAMObj, Geometry):
         self.ui.paint_tool_button.clicked.connect(lambda: self.app.paint_tool.run(toggle=True))
         self.ui.generate_ncc_button.clicked.connect(lambda: self.app.ncclear_tool.run(toggle=True))
         self.ui.milling_button.clicked.connect(self.on_milling_button_clicked)
+        self.ui.laser_button.clicked.connect(lambda: self.app.laser_tool.run(toggle=True))
 
         self.ui.util_button.clicked.connect(lambda st: self.ui.util_frame.show() if st else self.ui.util_frame.hide())
         self.ui.vertex_points_btn.clicked.connect(self.on_calculate_vertex_points)

@@ -1067,6 +1067,15 @@ class GeometryObjectUI(ObjectUI):
         #                 """)
         plugins_grid.addWidget(self.generate_ncc_button, 4, 0)
 
+        # Laser Tool - generate laser engraving/cutting GCode from this Geometry
+        self.laser_button = FCButton(_('Laser'))
+        self.laser_button.setIcon(QtGui.QIcon(self.app.resource_location + '/cutpath32.png'))
+        self.laser_button.setToolTip(
+            _("Generate a laser engraving/cutting CNCJob\n"
+              "from this Geometry object.")
+        )
+        plugins_grid.addWidget(self.laser_button, 6, 0)
+
         # separator_line = QtWidgets.QFrame()
         # separator_line.setFrameShape(QtWidgets.QFrame.Shape.HLine)
         # separator_line.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
