@@ -76,6 +76,7 @@ from appCommon.RegisterFileKeywords import RegisterFK, Extensions, KeyWords
 
 from appHandlers.appIO import appIO
 from appHandlers.appEdit import appEditor
+from appHandlers.appAutoSave import AppAutoSave, newest_snapshot
 
 from Bookmark import BookmarkManager
 from appDatabase import ToolsDB2
@@ -851,9 +852,8 @@ class App(QtCore.QObject):
         # ###########################################################################################################
 
         self.block_autosave = False
-        self.autosave_timer = QtCore.QTimer(self)
-        self.save_project_auto_update()
-        self.autosave_timer.timeout.connect(self.save_project_auto)
+        self.autosave = AppAutoSave(self)
+        self.autosave.start()
 
         # ###########################################################################################################
         # ##################################### UPDATE PREFERENCES GUI FORMS ########################################
@@ -1427,6 +1427,11 @@ class App(QtCore.QObject):
             self.inform.emit('[WARNING_NOTCL] %s' % _("Found old default preferences files. "
                                                       "Please reboot the application to update."))
             self.defaults.old_defaults_found = False
+
+        # ----- Auto-save crash recovery -----
+        if self.options.get('global_autosave') is True:
+            self.check_autosave_recovery()
+        self.autosave.create_session_marker()
 
     # ######################################### INIT FINISHED  #######################################################
     # #################################################################################################################
@@ -3874,6 +3879,13 @@ class App(QtCore.QObject):
 
         if silent is False:
             self.log.debug("App.quit_application() --> App Defaults saved.")
+
+        # auto-save: a clean exit means there is nothing to recover
+        try:
+            self.autosave.stop()
+            self.autosave.mark_clean_exit()
+        except Exception:
+            pass
 
         # hide the UI so the user experiments a faster shutdown
         self.ui.hide()
@@ -7846,32 +7858,51 @@ class App(QtCore.QObject):
             traceback.print_exc()
 
     def save_project_auto(self):
-        """
-        Called periodically to save the project.
-        It will save if there is no block on the save, if the project was saved at least once and if there is no save in
-        # progress.
-
-        :return:
-        """
-
-        if self.block_autosave is False and self.should_we_save is True and self.save_in_progress is False:
-            self.f_handlers.on_file_save_project()
+        """Periodic auto-save tick — delegated to AppAutoSave."""
+        self.autosave.do_snapshot()
 
     def save_project_auto_update(self):
-        """
-        Update the auto save time interval value.
-        :return:
-        """
+        """Re-read the auto-save interval / enabled flag and restart the timer."""
         self.log.debug("App.save_project_auto_update() --> updated the interval timeout.")
-        try:
-            if self.autosave_timer.isActive():
-                self.autosave_timer.stop()
-        except Exception:
-            pass
+        self.autosave.update_interval()
 
-        if self.options['global_autosave'] is True:
-            self.autosave_timer.setInterval(int(self.options['global_autosave_timeout']))
-            self.autosave_timer.start()
+    def check_autosave_recovery(self):
+        """
+        On launch, if a session marker from a previous *unclean* exit is found,
+        offer to restore the newest recovery snapshot.
+        """
+        marker = self.autosave.check_for_recovery()
+        if not marker:
+            return
+        snap = marker.get("snapshot") or newest_snapshot(self.data_path)
+        if not snap or not os.path.exists(snap):
+            # stale marker, nothing usable to restore
+            self.autosave.mark_clean_exit()
+            return
+
+        msgbox = QtWidgets.QMessageBox()
+        msgbox.setWindowTitle(_("Restore Auto-Saved Project"))
+        msgbox.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+        msgbox.setText(_("FlatCAM did not shut down cleanly."))
+        msgbox.setInformativeText(_("Restore your last auto-saved project?"))
+        btn_restore = msgbox.addButton(_("Restore"), QtWidgets.QMessageBox.ButtonRole.AcceptRole)
+        btn_discard = msgbox.addButton(_("Discard"), QtWidgets.QMessageBox.ButtonRole.DestructiveRole)
+        msgbox.addButton(_("Keep files"), QtWidgets.QMessageBox.ButtonRole.RejectRole)
+        msgbox.setDefaultButton(btn_restore)
+        msgbox.exec()
+        clicked = msgbox.clickedButton()
+
+        if clicked == btn_restore:
+            self.f_handlers.open_project(snap)
+            self.inform.emit('[success] %s' % _("Auto-saved project restored."))
+        elif clicked == btn_discard:
+            self.autosave.mark_clean_exit()
+        else:
+            # Keep files: drop only the stale marker so we don't re-prompt next launch
+            try:
+                os.remove(os.path.join(self.data_path, "recovery", "session.lock"))
+            except OSError:
+                pass
 
     def on_defaults2options(self):
         """
