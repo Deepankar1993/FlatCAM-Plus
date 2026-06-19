@@ -2537,10 +2537,12 @@ class appIO(QtCore.QObject):
                         except IOError:
                             self.log.error("Failed to open project file: %s" % prj_filename)
                             self.inform.emit('[ERROR_NOTCL] %s: %s' % (_("Failed to open project file"), prj_filename))
+                            self.app.block_autosave = False     # load failed -> re-enable auto-save
                             return
                     else:
                         self.log.error("Failed to open project file: %s" % prj_filename)
                         self.inform.emit('[ERROR_NOTCL] %s: %s' % (_("Failed to open project file"), prj_filename))
+                        self.app.block_autosave = False         # load failed -> re-enable auto-save
                         return
 
                 try:
@@ -2559,12 +2561,14 @@ class appIO(QtCore.QObject):
                     except Exception as e:
                         self.log.error("Failed to open project file: %s with error: %s" % (prj_filename, str(e)))
                         self.inform.emit('[ERROR_NOTCL] %s: %s' % (_("Failed to open project file"), prj_filename))
+                        self.app.block_autosave = False         # load failed -> re-enable auto-save
                         return
 
                 # basic sanity check on the parsed structure; a corrupted file should not take the app down
                 if not isinstance(d, dict) or 'objs' not in d or 'options' not in d:
                     self.log.error("Project file is malformed (missing 'objs'/'options'): %s" % prj_filename)
                     self.inform.emit('[ERROR_NOTCL] %s: %s' % (_("Failed to open project file"), prj_filename))
+                    self.app.block_autosave = False             # load failed -> re-enable auto-save
                     return
 
                 # Check for older projects and convert them in-place to the current format.
