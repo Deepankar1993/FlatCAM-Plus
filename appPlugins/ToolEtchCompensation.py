@@ -29,6 +29,7 @@ log = logging.getLogger('base')
 
 
 class ToolEtchCompensation(AppTool):
+    plugin_tooltip = _("Compensates a Gerber's copper features for the sideways undercut that happens during chemical etching, so the etched result matches the dimensions you actually want. It grows or shrinks the geometry based on the copper thickness and the etchant's lateral factor. Select a Gerber object, enter the copper thickness and etchant, then apply the compensation to update the object.")
 
     def __init__(self, app):
         self.app = app
@@ -205,6 +206,13 @@ class ToolEtchCompensation(AppTool):
             if factor_value is None:
                 self.app.inform.emit('[ERROR_NOTCL] %s' % _("Missing parameter value."))
                 return
+            if factor_value <= 0:
+                # etch_factor = 1 / factor_value -> a value of 0 crashed with ZeroDivisionError,
+                # and a negative value silently shrank the copper instead of growing it. The Etch
+                # Factor (depth-to-lateral etch ratio) is always a positive, non-zero number.
+                self.app.inform.emit(
+                    '[ERROR_NOTCL] %s' % _("The Etch Factor must be a positive, non-zero number."))
+                return
             etch_factor = 1 / factor_value
             offset = thickness / etch_factor
         elif ratio_type == 'etch_list':
@@ -227,10 +235,24 @@ class ToolEtchCompensation(AppTool):
             return
 
         grb_obj.solid_geometry = flatten_shapely_geometry(grb_obj.solid_geometry)
-        new_solid_geometry = []
 
+        # an object with no geometry would silently produce an empty result, so bail out with a clear message
+        if not grb_obj.solid_geometry:
+            self.app.inform.emit(
+                '[ERROR_NOTCL] %s' % _("The source object has no geometry to compensate."))
+            return
+
+        new_solid_geometry = []
         for poly in grb_obj.solid_geometry:
+            # only polygonal/linear geometry can be buffered; skip anything empty or invalid
+            if poly is None or poly.is_empty:
+                continue
             new_solid_geometry.append(poly.buffer(offset, int(grb_circle_steps)))
+
+        if not new_solid_geometry:
+            self.app.inform.emit(
+                '[ERROR_NOTCL] %s' % _("The source object has no geometry to compensate."))
+            return
         new_solid_geometry = unary_union(new_solid_geometry)
 
         new_options = {}
@@ -241,7 +263,8 @@ class ToolEtchCompensation(AppTool):
 
         # update the apertures attributes (keys in the apertures dict)
         for ap in new_apertures:
-            ap_type = new_apertures[ap]['type']
+            # some apertures (e.g. macro-based or malformed) may not declare a 'type'; treat them as generic
+            ap_type = new_apertures[ap].get('type', None)
             for k in new_apertures[ap]:
                 if ap_type == 'R' or ap_type == 'O':
                     if k == 'width' or k == 'height':
@@ -252,18 +275,22 @@ class ToolEtchCompensation(AppTool):
 
                 if k == 'geometry':
                     for geo_el in new_apertures[ap][k]:
-                        if 'solid' in geo_el:
-                            geo_el['solid'] = geo_el['solid'].buffer(offset, int(grb_circle_steps))
+                        # 'solid' may be missing, None, or an empty geometry; only buffer real shapes
+                        solid = geo_el.get('solid', None) if isinstance(geo_el, dict) else None
+                        if solid is not None and not solid.is_empty:
+                            geo_el['solid'] = solid.buffer(offset, int(grb_circle_steps))
 
         # in case of 'R' or 'O' aperture type we need to update the aperture 'size' after
         # the 'width' and 'height' keys were updated
         for ap in new_apertures:
-            ap_type = new_apertures[ap]['type']
-            for k in new_apertures[ap]:
-                if ap_type == 'R' or ap_type == 'O':
-                    if k == 'size':
-                        new_apertures[ap][k] = math.sqrt(
-                            new_apertures[ap]['width'] ** 2 + new_apertures[ap]['height'] ** 2)
+            ap_type = new_apertures[ap].get('type', None)
+            if ap_type != 'R' and ap_type != 'O':
+                continue
+            # 'width'/'height' may be absent on a malformed aperture; only recompute 'size' when both exist
+            if 'size' in new_apertures[ap] and \
+                    'width' in new_apertures[ap] and 'height' in new_apertures[ap]:
+                new_apertures[ap]['size'] = math.sqrt(
+                    new_apertures[ap]['width'] ** 2 + new_apertures[ap]['height'] ** 2)
 
         def init_func(new_obj, app_obj):
             """
@@ -317,12 +344,25 @@ class EtchUI:
         title_label = FCLabel("%s" % self.pluginName, size=16, bold=True)
         self.tools_box.addWidget(title_label)
 
+        # Plain-language description for beginners
+        self.description_label = FCLabel(
+            _("When a PCB is wet-etched, the etchant eats sideways under the mask, so the finished\n"
+              "copper ends up narrower than your design. This tool grows every copper feature by that\n"
+              "lateral undercut, so the etched board matches the original artwork. Use it before\n"
+              "generating Gerber output for boards you intend to etch yourself.")
+        )
+        self.description_label.setWordWrap(True)
+        self.tools_box.addWidget(self.description_label)
+
         # #############################################################################################################
         # Source Object Frame
         # #############################################################################################################
         self.gerber_label = FCLabel('%s' % _("Source Object"), color='darkorange', bold=True)
         self.gerber_label.setToolTip(
-            _("Gerber object that will be compensated.")
+            _("The Gerber object to compensate.\n"
+              "Pick the copper layer you are going to etch (for example a top or bottom\n"
+              "copper Gerber). A new object named '<source>_comp' with grown copper\n"
+              "features will be created; the original is left unchanged.")
         )
         self.tools_box.addWidget(self.gerber_label)
 
@@ -339,7 +379,12 @@ class EtchUI:
         # Utilities
         # #############################################################################################################
         self.util_label = FCLabel('%s' % _("Utilities"), color='red', bold=True)
-        self.util_label.setToolTip('%s.' % _("Conversion utilities"))
+        self.util_label.setToolTip(
+            _("Optional helpers to work out the Copper Thickness in microns.\n"
+              "Copper weight is often given in ounces (oz) or thickness in mils, but this\n"
+              "tool expects microns [um]. Use these converters if you only know the oz or\n"
+              "mils value.")
+        )
         self.tools_box.addWidget(self.util_label)
 
         util_frame = FCFrame()
@@ -352,9 +397,10 @@ class EtchUI:
         # Oz to um conversion
         self.oz_um_label = FCLabel('%s:' % _('Oz to Microns'))
         self.oz_um_label.setToolTip(
-            _("Will convert from oz thickness to microns [um].\n"
-              "Can use formulas with operators: /, *, +, -, %, .\n"
-              "The real numbers use the dot decimals separator.")
+            _("Convert copper weight in ounces (oz) to thickness in microns [um].\n"
+              "Typical PCB copper is 1 oz, which is about 35 um; 2 oz is about 70 um.\n"
+              "You can type a formula using the operators: /, *, +, -, % .\n"
+              "Use the dot as the decimal separator.")
         )
         grid0.addWidget(self.oz_um_label, 0, 0, 1, 2)
 
@@ -362,9 +408,15 @@ class EtchUI:
 
         self.oz_entry = NumericalEvalEntry(border_color='#0069A9')
         self.oz_entry.setPlaceholderText(_("Oz value"))
+        self.oz_entry.setToolTip(
+            _("Copper weight in ounces (oz). For example enter 1 for standard 1 oz copper.")
+        )
         self.oz_to_um_entry = FCEntry()
         self.oz_to_um_entry.setPlaceholderText(_("Microns value"))
         self.oz_to_um_entry.setReadOnly(True)
+        self.oz_to_um_entry.setToolTip(
+            _("Result of the conversion, in microns [um]. Copy this into Copper Thickness.")
+        )
 
         hlay_1.addWidget(self.oz_entry)
         hlay_1.addWidget(FCLabel(" "))
@@ -374,9 +426,10 @@ class EtchUI:
         # Mils to um conversion
         self.mils_um_label = FCLabel('%s:' % _('Mils to Microns'))
         self.mils_um_label.setToolTip(
-            _("Will convert from mils to microns [um].\n"
-              "Can use formulas with operators: /, *, +, -, %, .\n"
-              "The real numbers use the dot decimals separator.")
+            _("Convert a thickness in mils (thousandths of an inch) to microns [um].\n"
+              "1 mil equals 25.4 um, so 1.4 mils is about 35 um (roughly 1 oz copper).\n"
+              "You can type a formula using the operators: /, *, +, -, % .\n"
+              "Use the dot as the decimal separator.")
         )
         grid0.addWidget(self.mils_um_label, 4, 0, 1, 2)
 
@@ -384,9 +437,15 @@ class EtchUI:
 
         self.mils_entry = NumericalEvalEntry(border_color='#0069A9')
         self.mils_entry.setPlaceholderText(_("Mils value"))
+        self.mils_entry.setToolTip(
+            _("Thickness in mils (thousandths of an inch). For example enter 1.4 for 1 oz copper.")
+        )
         self.mils_to_um_entry = FCEntry()
         self.mils_to_um_entry.setPlaceholderText(_("Microns value"))
         self.mils_to_um_entry.setReadOnly(True)
+        self.mils_to_um_entry.setToolTip(
+            _("Result of the conversion, in microns [um]. Copy this into Copper Thickness.")
+        )
 
         hlay_2.addWidget(self.mils_entry)
         hlay_2.addWidget(FCLabel(" "))
@@ -409,8 +468,10 @@ class EtchUI:
         # Thickness
         self.thick_label = FCLabel('%s:' % _('Copper Thickness'))
         self.thick_label.setToolTip(
-            _("The thickness of the copper foil.\n"
-              "In microns [um].")
+            _("How thick the copper foil is, in microns [um].\n"
+              "The thicker the copper, the more it is undercut sideways during etching.\n"
+              "Typical values: 1 oz copper = 35 um, 2 oz copper = 70 um.\n"
+              "If you only know oz or mils, use the converters in the Utilities section above.")
         )
         self.thick_entry = FCDoubleSpinner(callback=self.confirmation_message)
         self.thick_entry.set_precision(self.decimals)
@@ -421,16 +482,21 @@ class EtchUI:
 
         self.ratio_label = FCLabel('%s:' % _("Ratio"))
         self.ratio_label.setToolTip(
-            _("The ratio of lateral etch versus depth etch.\n"
-              "Can be:\n"
-              "- custom -> the user will enter a custom value\n"
-              "- preselection -> value which depends on a selection of etchants")
+            _("How to decide how much to grow the copper. Choose one method:\n"
+              "- Etch Factor: you type the depth-to-side etch ratio yourself.\n"
+              "- Etchants list: pick your chemical and a typical ratio is used for you.\n"
+              "- Manual offset: you give the exact amount to grow, in microns, directly.\n"
+              "If you are unsure, start with the Etchants list.")
         )
         self.ratio_radio = RadioSet([
             {'label': _('Etch Factor'), 'value': 'factor'},
             {'label': _('Etchants list'), 'value': 'etch_list'},
             {'label': _('Manual offset'), 'value': 'manual'}
         ], orientation='vertical', compact=True)
+        self.ratio_radio.setToolTip(
+            _("Pick how the copper growth is calculated. The matching input field below\n"
+              "(Etch Factor, Etchants, or Offset) will appear once you select an option.")
+        )
 
         grid1.addWidget(self.ratio_label, 2, 0, 1, 2)
         grid1.addWidget(self.ratio_radio, 4, 0, 1, 2)
@@ -443,10 +509,18 @@ class EtchUI:
         # Etchants
         self.etchants_label = FCLabel('%s:' % _('Etchants'))
         self.etchants_label.setToolTip(
-            _("A list of etchants.")
+            _("The chemical you will use to etch the board.\n"
+              "Each etchant undercuts the copper a bit differently, so picking one sets a\n"
+              "typical etch factor for you automatically (no need to know the number):\n"
+              "- CuCl2 (copper chloride): etch factor about 3.\n"
+              "- Fe3Cl (ferric chloride) and alkaline baths: etch factor about 4.")
         )
         self.etchants_combo = FCComboBox(callback=self.confirmation_message)
         self.etchants_combo.addItems(["CuCl2", "Fe3Cl", _("Alkaline baths")])
+        self.etchants_combo.setToolTip(
+            _("Choose the etchant you will use. A typical etch factor for that\n"
+              "chemical is applied automatically.")
+        )
 
         grid1.addWidget(self.etchants_label, 8, 0)
         grid1.addWidget(self.etchants_combo, 8, 1)
@@ -454,11 +528,17 @@ class EtchUI:
         # Etch Factor
         self.factor_label = FCLabel('%s:' % _('Etch Factor'))
         self.factor_label.setToolTip(
-            _("The ratio between depth etch and lateral etch .\n"
-              "Accepts real numbers and formulas using the operators: /,*,+,-,%")
+            _("The depth-to-side etch ratio: how much the etchant cuts down for every\n"
+              "unit it cuts sideways. A higher number means less sideways undercut, so\n"
+              "less compensation is needed.\n"
+              "Typical values are between 2 and 3. Must be a positive, non-zero number.\n"
+              "You may type a formula using the operators: /, *, +, -, % .")
         )
         self.factor_entry = NumericalEvalEntry(border_color='#0069A9')
         self.factor_entry.setPlaceholderText(_("Real number or formula"))
+        self.factor_entry.setToolTip(
+            _("Enter the etch factor, for example 2.5 . Must be greater than 0.")
+        )
 
         grid1.addWidget(self.factor_label, 10, 0)
         grid1.addWidget(self.factor_entry, 10, 1)
@@ -466,8 +546,12 @@ class EtchUI:
         # Manual Offset
         self.offset_label = FCLabel('%s:' % _('Offset'))
         self.offset_label.setToolTip(
-            _("Value with which to increase or decrease (buffer)\n"
-              "the copper features. In microns [um].")
+            _("The exact amount to grow (or shrink) every copper feature, in microns [um].\n"
+              "Use this when you already know the compensation you want, for example from\n"
+              "measuring previous boards.\n"
+              "A positive value grows the copper (the usual case); a negative value shrinks it.\n"
+              "As a rough guide, the growth needed is about Copper Thickness / Etch Factor,\n"
+              "for example 35 um / 2.5 is about 14 um.")
         )
         self.offset_entry = FCDoubleSpinner(callback=self.confirmation_message)
         self.offset_entry.set_precision(self.decimals)
@@ -490,7 +574,9 @@ class EtchUI:
         self.compensate_btn = FCButton(_('Compensate'), bold=True)
         self.compensate_btn.setIcon(QtGui.QIcon(self.app.resource_location + '/etch_32.png'))
         self.compensate_btn.setToolTip(
-            _("Will increase the copper features thickness to compensate the lateral etch.")
+            _("Grow the copper features to make up for the sideways etch, then create a new\n"
+              "Gerber object named '<source>_comp'. The original object is not changed.\n"
+              "Set the Source Object, Copper Thickness, and a Ratio method before clicking.")
         )
         self.tools_box.addWidget(self.compensate_btn)
 
@@ -500,7 +586,8 @@ class EtchUI:
         self.reset_button = FCButton(_("Reset Tool"), bold=True)
         self.reset_button.setIcon(QtGui.QIcon(self.app.resource_location + '/reset32.png'))
         self.reset_button.setToolTip(
-            _("Will reset the tool parameters.")
+            _("Clear all the fields above and return this tool to its default settings.\n"
+              "Your loaded objects are not affected.")
         )
         self.layout.addWidget(self.reset_button)
 

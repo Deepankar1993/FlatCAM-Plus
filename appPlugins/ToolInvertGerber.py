@@ -29,6 +29,7 @@ log = logging.getLogger('base')
 
 
 class ToolInvertGerber(AppTool):
+    plugin_tooltip = _("Inverts a Gerber object's polarity within its bounding box, swapping the copper and the clear areas to produce a negative image of the layer. This is handy when you need the inverse of a layer (for example for some etching or masking workflows). Select a Gerber object and run it to get the inverted Gerber.")
 
     def __init__(self, app):
         self.app = app

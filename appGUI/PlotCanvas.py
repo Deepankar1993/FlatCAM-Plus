@@ -8,6 +8,7 @@
 from PyQt6 import QtCore, QtGui
 
 import logging
+import time
 from appGUI.VisPyCanvas import VisPyCanvas, Color
 from appGUI.VisPyVisuals import ShapeGroup, ShapeCollection, TextCollection, TextGroup, Cursor
 from vispy.scene.visuals import InfiniteLine, Line, Rectangle, Text
@@ -49,6 +50,19 @@ class PlotCanvas(QtCore.QObject, VisPyCanvas):
         self.unfreeze()
 
         self.fcapp = fcapp
+
+        # ---- Big-cursor (crosshair) repaint throttle ----
+        # InfiniteLineVisual.set_data() only flips internal dirty flags; it does NOT schedule a
+        # canvas redraw, so the crosshair is repainted by an explicit self.view.scene.update() in
+        # on_mouse_position(). That call requests a FULL-scene repaint, whose cost scales with the
+        # loaded geometry, and it used to fire on every single mouse-position event. We coalesce it
+        # to ~60 Hz (mirroring the 15 ms camera throttle in VisPyCanvas.Camera) while a trailing
+        # single-shot timer guarantees the final position is always drawn once the mouse settles.
+        self._cursor_last_update_t = 0.0
+        self._cursor_update_interval = 0.015  # seconds (~66 Hz)
+        self._cursor_flush_timer = QtCore.QTimer(self)
+        self._cursor_flush_timer.setSingleShot(True)
+        self._cursor_flush_timer.timeout.connect(self._flush_cursor_update)
 
         settings = QtCore.QSettings("Open Source", "FlatCAM_EVO")
         if settings.contains("theme"):
@@ -308,6 +322,39 @@ class PlotCanvas(QtCore.QObject, VisPyCanvas):
             if silent is None:
                 self.fcapp.inform[str, bool].emit(_("HUD disabled."), False)
 
+    def _get_hud_font_metrics(self):
+        """
+        Return the cached (QFontMetrics, font_size) for the HUD, rebuilding only when the
+        configured HUD font size changes. Also caches the fixed label-prefix widths and the
+        line height/spacing so the per-mouse-move path does no font construction.
+        """
+        qsettings = QtCore.QSettings("Open Source", "FlatCAM_EVO")
+        if qsettings.contains("hud_font_size"):
+            fsize = qsettings.value('hud_font_size', type=int)
+        else:
+            fsize = 8
+
+        if getattr(self, '_hud_fsize', None) != fsize or getattr(self, '_hud_font_metrics', None) is None:
+            try:
+                c_font = QtGui.QFont("times", fsize)
+            except Exception:
+                # maybe Unix-like OS's don't have the Times font installed, use whatever is available
+                c_font = QtGui.QFont()
+                c_font.setPointSize(fsize)
+
+            fm = QtGui.QFontMetrics(c_font)
+            self._hud_fsize = fsize
+            self._hud_font = c_font
+            self._hud_font_metrics = fm
+            self._hud_pre1 = fm.horizontalAdvance('Dx:xxx[mm]')
+            self._hud_pre2 = fm.horizontalAdvance('Dy:xxx[mm]')
+            self._hud_pre3 = fm.horizontalAdvance('X:xxxxx[mm]')
+            self._hud_pre4 = fm.horizontalAdvance('Y:xxxxx[mm]')
+            self._hud_line_height = fm.boundingRect('Dx: 0.0 [mm]').height()
+            self._hud_line_spacing = fm.lineSpacing()
+
+        return self._hud_font_metrics, self._hud_fsize
+
     def on_update_text_hud(self, dx=None, dy=None, x=None, y=None):
         """
         Update the text of the location labels from HUD
@@ -336,36 +383,20 @@ class PlotCanvas(QtCore.QObject, VisPyCanvas):
         l4_hud_text = 'Y:   %s [%s]' % (y_dec, units)
         hud_text = '%s\n%s\n\n%s\n%s' % (l1_hud_text, l2_hud_text, l3_hud_text, l4_hud_text)
 
-        # font size
-        qsettings = QtCore.QSettings("Open Source", "FlatCAM_EVO")
-        if qsettings.contains("hud_font_size"):
-            fsize = qsettings.value('hud_font_size', type=int)
-        else:
-            fsize = 8
+        # Font + font-metrics (and the fixed label-prefix widths) are cached and only
+        # rebuilt when the HUD font size changes. Constructing a QFont/QFontMetrics and
+        # re-measuring the fixed prefixes on every mouse move was pure per-frame waste.
+        c_font_metrics, fsize = self._get_hud_font_metrics()
 
-        try:
-            c_font = QtGui.QFont("times", fsize)
-        except Exception:
-            # maybe Unix-like OS's don't have the Times font installed, use whatever is available
-            c_font = QtGui.QFont()
-            c_font.setPointSize(fsize)
+        l1_length = self._hud_pre1 + c_font_metrics.horizontalAdvance(str(dx_dec))
+        l2_length = self._hud_pre2 + c_font_metrics.horizontalAdvance(str(dy_dec))
+        l3_length = self._hud_pre3 + c_font_metrics.horizontalAdvance(str(x_dec))
+        l4_length = self._hud_pre4 + c_font_metrics.horizontalAdvance(str(y_dec))
 
-        c_font_metrics = QtGui.QFontMetrics(c_font)
-
-        l1_length = c_font_metrics.horizontalAdvance('Dx:xxx[mm]') + c_font_metrics.horizontalAdvance(str(dx_dec))
-        l2_length = c_font_metrics.horizontalAdvance('Dy:xxx[mm]') + c_font_metrics.horizontalAdvance(str(dy_dec))
-        l3_length = c_font_metrics.horizontalAdvance('X:xxxxx[mm]') + c_font_metrics.horizontalAdvance(str(x_dec))
-        l4_length = c_font_metrics.horizontalAdvance('Y:xxxxx[mm]') + c_font_metrics.horizontalAdvance(str(y_dec))
-        # l1_length = c_font_metrics.boundingRect(l1_hud_text).width()
-        # l2_length = c_font_metrics.boundingRect(l2_hud_text).width()
-        # l3_length = c_font_metrics.boundingRect(l3_hud_text).width()
-        # l4_length = c_font_metrics.boundingRect(l4_hud_text).width()
-
-        l1_height = c_font_metrics.boundingRect(l1_hud_text).height()
-        # print(self.fcapp.qapp.devicePixelRatio())
+        l1_height = self._hud_line_height
 
         # coordinates and anchors
-        height = (5 * l1_height) + c_font_metrics.lineSpacing() * 1.5 + 10
+        height = (5 * l1_height) + self._hud_line_spacing * 1.5 + 10
         width = max(l1_length, l2_length, l3_length, l4_length) * 1.3  # don't know where the 1.3 comes
         center_x = (width / 2) + 5
         center_y = (height / 2) + 5
@@ -572,8 +603,29 @@ class PlotCanvas(QtCore.QObject, VisPyCanvas):
         else:
             color = self.line_color
 
+        # set_data() is cheap (only flips dirty flags), so always refresh the buffers with the
+        # latest position. The actual full-scene repaint via scene.update() is throttled below.
         self.cursor_h_line.set_data(pos=pos[1], color=color)
         self.cursor_v_line.set_data(pos=pos[0], color=color)
+
+        t = time.time()
+        if t - self._cursor_last_update_t >= self._cursor_update_interval:
+            # Enough time elapsed: repaint now and stop any pending trailing flush.
+            self._cursor_last_update_t = t
+            self._cursor_flush_timer.stop()
+            self.view.scene.update()
+        else:
+            # Too soon: defer a single trailing repaint so the crosshair still lands on the final
+            # position once the mouse stops, without forcing a full repaint on every event.
+            if not self._cursor_flush_timer.isActive():
+                remaining_ms = int(
+                    (self._cursor_update_interval - (t - self._cursor_last_update_t)) * 1000
+                )
+                self._cursor_flush_timer.start(max(remaining_ms, 1))
+
+    def _flush_cursor_update(self):
+        """Trailing crosshair repaint, scheduled when on_mouse_position is throttled."""
+        self._cursor_last_update_t = time.time()
         self.view.scene.update()
 
     def on_mouse_scroll(self, event):

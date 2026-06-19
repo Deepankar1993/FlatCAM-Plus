@@ -97,7 +97,8 @@ class AppDefaults:
         "global_save_compressed": True,
         "global_compression_level": 3,
         "global_autosave": False,
-        "global_autosave_timeout": 300000,
+        "global_autosave_timeout": 30000,
+        "global_autosave_keep":     10,
 
         "global_tpdf_tmargin": 15.0,
         "global_tpdf_bmargin": 10.0,

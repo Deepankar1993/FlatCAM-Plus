@@ -33,6 +33,7 @@ log = logging.getLogger('base')
 
 
 class ToolFiducials(AppTool):
+    plugin_tooltip = _("Adds fiducial alignment marks (circular, cross or chess pattern) to the board, with optional copper and soldermask coverage, so pick-and-place machines and cameras can register the board precisely. Choose the fiducial type and positions, then add them to create the fiducial geometry.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

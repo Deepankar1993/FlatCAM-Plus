@@ -20,6 +20,7 @@ from appTool import AppTool
 
 from copy import deepcopy
 import collections
+import os
 from datetime import datetime
 
 import numpy as np
@@ -894,14 +895,24 @@ class AppLogging:
         self.app = app
 
         self._log = logging.getLogger('base')
-        self._log.setLevel(logging.DEBUG)
-        # log.setLevel(logging.WARNING)
+        # Keep console output quiet by default — emitting every DEBUG record to the
+        # console is slow (especially on Windows). Opt into full DEBUG via FLATCAM_DEBUG.
+        self._log.setLevel(logging.DEBUG if os.environ.get('FLATCAM_DEBUG') else logging.WARNING)
         formatter = logging.Formatter('[%(levelname)s][%(threadName)s] %(message)s')
         handler = logging.StreamHandler()
         handler.setFormatter(formatter)
         self._log.addHandler(handler)
 
         self._log_level = log_level
+
+    def _shell_visible(self):
+        # Appending to the Tcl shell QTextEdit on every log call (it grows unbounded and
+        # forces a layout reflow) was a major source of UI sluggishness during plotting
+        # and heavy operations. Skip the GUI echo when the shell isn't even on screen.
+        try:
+            return self.app.ui.shell_dock.isVisible()
+        except Exception:
+            return False
 
     @property
     def log_level(self):
@@ -914,23 +925,25 @@ class AppLogging:
     def info(self, msg):
         if self._log_level == 0:
             return
-        # current date now
-        date = str(datetime.today()).rpartition('.')[0]
-        date = ''.join(c for c in date if c not in ':-')
-        date = date.replace(' ', '_')
-
         self._log.info(msg=msg)
-        self.app.inform_shell.emit('[log]INFO %s ***\t%s' % (date, msg))
-
-    def debug(self, msg):
-        if self._log_level == 0:
+        if not self._shell_visible():
             return
         # current date now
         date = str(datetime.today()).rpartition('.')[0]
         date = ''.join(c for c in date if c not in ':-')
         date = date.replace(' ', '_')
+        self.app.inform_shell.emit('[log]INFO %s ***\t%s' % (date, msg))
 
+    def debug(self, msg):
+        if self._log_level == 0:
+            return
         self._log.debug(msg=msg)
+        if not self._shell_visible():
+            return
+        # current date now
+        date = str(datetime.today()).rpartition('.')[0]
+        date = ''.join(c for c in date if c not in ':-')
+        date = date.replace(' ', '_')
         self.app.inform_shell.emit('[log]DEBUG %s ***\t%s' % (date, msg))
 
     def warning(self, msg):

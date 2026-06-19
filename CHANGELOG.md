@@ -8,6 +8,54 @@ CHANGELOG for FlatCAM Evo beta
 
 =================================================
 
+19.06.2026  (auto-save crash recovery)
+
+- Auto-save / crash recovery: the project is now automatically snapshotted to a
+  recovery folder (`<user data>/recovery/`) in the background.  When enabled
+  (Edit → Preferences → General → "Enable Auto Save"), a snapshot is written on
+  the configured interval (default 30 s; "Auto save timeout" field) and the last
+  N versions are retained ("Keep backups", default 10); older snapshots are
+  pruned automatically.  Snapshots are silent — no "Save As" dialog is triggered
+  even for never-saved (unnamed) projects — and run on a worker thread so the UI
+  stays responsive; a brief "[success] Auto-saved" status-bar indicator confirms
+  each cycle.  On the next launch after an unclean shutdown FlatCAM detects the
+  crash-recovery marker and offers to restore the last auto-saved project, giving
+  the user the choice to accept or discard it.
+
+=================================================
+
+19.06.2026  (detailed tooltips & feature docs)
+
+- Tooltips: expanded the menu and plugin tooltips into proper beginner help. Every menu / editor-menu / right-click action in MainGUI.py now has a detailed tooltip explaining what it is, what it does and how/when to use it (with the keyboard shortcut where applicable), while the status-bar tip stays a short one-liner. All 34 plugin/tool menu actions now carry a 2-4 sentence description (what it produces, how it works, and the workflow: pick input object -> set params -> click -> get output object).
+- Docs: added/finished FEATURES.md, a complete reference of every menu, toolbar, shortcut, object type, editor, plugin, file format, preprocessor, Tcl command and preferences category. Rebranded its product self-references from "FlatCAM Evo" to "FlatCAM Plus" (keeping the accurate "based on FlatCAM Evo" lineage credit) and verified its catalog against the source tree.
+
+=================================================
+
+18.06.2026  (performance, etch fixes, rebrand, tooltips)
+
+- Performance: fixed the heavy sluggishness that appeared once a Gerber was loaded. Root cause: the "big cursor" crosshair (PlotCanvas.on_mouse_position) called self.view.scene.update() on EVERY mouse-position event, forcing a full repaint of the entire scene — whose cost scales with the loaded geometry. The crosshair buffers are still updated every event (cheap), but the full-scene repaint is now throttled to ~66 Hz with a guaranteed trailing repaint so the crosshair still tracks smoothly and lands on the final position at rest. (The small-cursor default path was never affected.)
+- Etch Compensation plugin: fixed 3 crashes that hit real boards with non-standard apertures - KeyError on a missing aperture 'type', KeyError on an 'R'/'O' aperture missing 'width'/'height' during the size recompute, and AttributeError when an aperture's 'solid' geometry was None. Aperture access is now defensive (.get with type/key guards, skips None/empty geometry). A source object with no geometry now reports a clear error instead of silently producing an empty board. (This is in addition to the earlier 0/negative Etch Factor guard.)
+- Etch Compensation plugin: made it beginner-friendly - added a short plain-language description of what etch compensation does and when to use it, and rewrote every field tooltip with units and realistic example values (1oz copper = 35um, etch factor 2-3, etc.).
+- Branding: the application icon/logo art still read "Evo"; the chip logo now reads "Plus" across all sizes (16-256) and both light/dark theme resource sets. (The splash screens already said "Plus".)
+- Tooltips: added beginner-friendly tooltips (and status-bar tips) to essentially every menu item - ~140 actions across the menu bar, editor menus, and right-click/context menus in MainGUI.py (with setToolTipsVisible enabled on all menus), plus a per-plugin description tooltip on all ~34 plugin/tool menu actions (wired through AppTool.install()).
+
+=================================================
+
+17.06.2026  (performance)
+
+- Performance: the app felt sluggish/laggy across the board. Profiled the hot paths and fixed the pervasive offenders:
+  - Status bar: App.info() forced a full QApplication.processEvents() on EVERY status message (and inform.emit fires constantly - progress, hovers, tool steps, "Ready"). This re-entrantly flushed the entire Qt event queue on each little update, serializing the whole UI. Now throttled to at most once every ~80 ms.
+  - Logging: with the default global_log_verbose=2 every self.log.debug() (hundreds per operation, incl. plot/redraw paths) formatted a timestamp, wrote to the console, AND appended to the Tcl shell QTextEdit (unbounded growth + layout reflow). Console logging now defaults to WARNING (opt into DEBUG via the FLATCAM_DEBUG env var) and the shell echo for info/debug is skipped unless the shell dock is actually visible.
+  - Mouse-move hover effect: replaced the per-object Shapely Polygon + Point.within() (a GEOS allocation + point-in-polygon query for every object, every motion event) with a plain numeric bounding-box test.
+  - HUD overlay: on_update_text_hud rebuilt a QFont + QFontMetrics and re-read QSettings and re-measured the fixed labels on every mouse move; these are now cached and only rebuilt when the HUD font size changes.
+  - CNCJob plotting: plot2() de-duplicated annotation positions with a linear "not in [list]" scan that grew per travel point -> O(n^2) on dense jobs; now uses a set for O(1) membership.
+  - Plot checkbox: toggling the whole-object "Plot" checkbox for Gerber/Geometry objects cleared and rebuilt every shape just to show/hide it (a multi-second freeze on large boards). It now flips the existing shapes' visibility instead.
+  - Selection-drag / hover stutter: the selection, hover and tool utility shape collections were built without options, so every update of their tiny geometry (a single rectangle, refreshed on EVERY mouse-move during a drag) was pickled and shipped to a multiprocessing worker process, with the GUI thread blocking on the IPC result (redraw() -> .wait()). They now compute their buffers inline (no pool round-trip); rendering output is identical. The large object/Gerber collections still use the pool.
+
+- Etch Compensation plugin: fixed a crash and a silent wrong-output case. Entering an Etch Factor of 0 raised ZeroDivisionError (etch_factor = 1 / factor_value); a negative Etch Factor silently shrank the copper instead of growing it. The Etch Factor is now validated as a positive, non-zero number with a clear message (the "Manual offset" mode still allows negative values, as intended).
+
+=================================================
+
 17.06.2026  (8.998)
 
 - bumped version to 8.998

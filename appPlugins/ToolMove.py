@@ -28,6 +28,7 @@ log = logging.getLogger('base')
 class ToolMove(AppTool):
 
     pluginName = _("Move")
+    plugin_tooltip = _("Lets you move the selected objects around the canvas by clicking a start (origin) point and then a destination point. The objects are shifted by the distance between those two clicks. Select the objects, activate Move, click the from-point and then the to-point to reposition them.")
     replot_signal = QtCore.pyqtSignal(list)
 
     def __init__(self, app):

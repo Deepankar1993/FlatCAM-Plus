@@ -2840,7 +2840,8 @@ class appIO(QtCore.QObject):
                     with open(filename, "wb") as f_to_write:
                         f_to_write.write(project_zipped)
 
-                    self.inform.emit('[success] %s: %s' % (_("Project saved to"), str(filename)))
+                    if silent is False:
+                        self.inform.emit('[success] %s: %s' % (_("Project saved to"), str(filename)))
                 else:
                     self.log.error("Failed to save file: %s. Empty binary file.", str(filename))
                     self.inform.emit('[ERROR_NOTCL] %s' % _("Failed."))

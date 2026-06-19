@@ -44,6 +44,7 @@ log = logging.getLogger('base')
 
 
 class ToolPaint(AppTool, Gerber):
+    plugin_tooltip = _("Clears the copper inside selected polygons or a chosen area by sweeping the tool back and forth in overlapping passes (line, seed, or contour strategies). It is typically used to empty out a region rather than just isolate its outline. Pick a Gerber object, select the polygons or area to paint and the tool and overlap, then generate the Geometry object to be milled.")
 
     def __init__(self, app):
         self.app = app

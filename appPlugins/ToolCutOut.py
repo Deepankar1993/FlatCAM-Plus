@@ -39,6 +39,7 @@ log = logging.getLogger('base')
 
 
 class CutOut(AppTool):
+    plugin_tooltip = _("Creates the perimeter cutout geometry that frees the finished PCB from the surrounding material. It supports freeform or rectangular outlines and leaves small holding \"bridge gaps\" (mouse-bites) so the board stays attached until you snap it out. Select the source object, set the tool diameter and the number/size of gaps, then generate the cutout Geometry to be milled.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

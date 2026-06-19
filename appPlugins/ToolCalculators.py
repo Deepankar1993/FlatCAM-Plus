@@ -25,6 +25,7 @@ log = logging.getLogger('base')
 
 
 class ToolCalculator(AppTool):
+    plugin_tooltip = _("A set of small PCB calculators. One works out the cut width of a V-shaped engraving bit for a given tip angle and cut depth; another estimates the area and the plating current needed for electroplating. Enter the input values for the calculator you need and it shows the computed result; it creates no object.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

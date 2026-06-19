@@ -824,7 +824,15 @@ class GerberObject(FlatCAMObj, Gerber):
         if self.muted_ui:
             return
         self.read_form_item('plot')
-        self.plot()
+        # Toggling the whole-object 'plot' checkbox is a pure show/hide. Flip the existing
+        # shapes' visibility instead of clearing and rebuilding every shape — a full re-plot
+        # (FlatCAMObj.plot() clears then re-adds all geometry) froze the UI for large Gerbers.
+        # The shape data persists while hidden on both backends, so this is equivalent.
+        # Fall back to a full plot on any anomaly (e.g. shapes not yet built).
+        try:
+            self.shapes.visible = self.obj_options['plot']
+        except Exception:
+            self.plot()
 
     def on_solid_cb_click(self, *args):
         if self.muted_ui:

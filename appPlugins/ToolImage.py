@@ -35,6 +35,7 @@ if '_' not in builtins.__dict__:
 
 
 class ToolImage(AppTool):
+    plugin_tooltip = _("Imports a raster image (such as BMP, PNG or JPG) and converts it into PCB geometry, mapping the dark and light pixels into shapes. It can either fill pixels directly (raster) or vectorize the image into outlines (trace). Choose the image file and the mode, set the scaling, and it creates a Gerber or Geometry object.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

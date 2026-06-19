@@ -76,6 +76,7 @@ from appCommon.RegisterFileKeywords import RegisterFK, Extensions, KeyWords
 
 from appHandlers.appIO import appIO
 from appHandlers.appEdit import appEditor
+from appHandlers.appAutoSave import AppAutoSave, newest_snapshot
 
 from Bookmark import BookmarkManager
 from appDatabase import ToolsDB2
@@ -301,8 +302,14 @@ class App(QtCore.QObject):
         # ######################################### LOGGING ###########################################################
         # #############################################################################################################
         self.log = logging.getLogger('base')
-        self.log.setLevel(logging.DEBUG)
-        # log.setLevel(logging.WARNING)
+        # Verbose DEBUG logging is expensive: it formats and writes a record for the
+        # hundreds of self.log.debug(...) calls made on most operations (including the
+        # plot/redraw and object-restore paths), and console output is slow on Windows.
+        # Default to WARNING; opt into full DEBUG by setting the FLATCAM_DEBUG env var.
+        if os.environ.get('FLATCAM_DEBUG'):
+            self.log.setLevel(logging.DEBUG)
+        else:
+            self.log.setLevel(logging.WARNING)
         formatter = logging.Formatter('[%(levelname)s][%(threadName)s] %(message)s')
         handler = logging.StreamHandler()
         handler.setFormatter(formatter)
@@ -845,9 +852,8 @@ class App(QtCore.QObject):
         # ###########################################################################################################
 
         self.block_autosave = False
-        self.autosave_timer = QtCore.QTimer(self)
-        self.save_project_auto_update()
-        self.autosave_timer.timeout.connect(self.save_project_auto)
+        self.autosave = AppAutoSave(self)
+        self.autosave.start()
 
         # ###########################################################################################################
         # ##################################### UPDATE PREFERENCES GUI FORMS ########################################
@@ -948,16 +954,27 @@ class App(QtCore.QObject):
         # Storage for shapes, storage that can be used by FlatCAm tools for utility geometry
         if self.use_3d_engine:
             # VisPy visuals
+            # These utility collections (selection / hover / tool) only ever hold tiny
+            # geometry (a single rectangle), updated on EVERY mouse-move during a drag.
+            # Force them onto the inline buffer path instead of the multiprocessing pool:
+            # pickling a Shapely polygon to a worker process and blocking on the IPC result
+            # (redraw() -> .wait()) costs far more than triangulating a 4-vertex rect inline,
+            # and it was the dominant source of selection-drag / hover stutter. Output is
+            # byte-identical; only where the work runs changes.
+            util_shape_opts = {"global_graphic_engine_3d_no_mp": True}
             try:
-                self.tool_shapes = ShapeCollection(parent=self.plotcanvas.view.scene, layers=1, pool=self.pool)
+                self.tool_shapes = ShapeCollection(parent=self.plotcanvas.view.scene, layers=1, pool=self.pool,
+                                                   fcoptions=util_shape_opts)
             except AttributeError:
                 self.tool_shapes = None
 
             # Storage for Hover Shapes
-            self.hover_shapes = ShapeCollection(parent=self.plotcanvas.view.scene, layers=1, pool=self.pool)
+            self.hover_shapes = ShapeCollection(parent=self.plotcanvas.view.scene, layers=1, pool=self.pool,
+                                                fcoptions=util_shape_opts)
 
             # Storage for Selection shapes
-            self.sel_shapes = ShapeCollection(parent=self.plotcanvas.view.scene, layers=1, pool=self.pool)
+            self.sel_shapes = ShapeCollection(parent=self.plotcanvas.view.scene, layers=1, pool=self.pool,
+                                              fcoptions=util_shape_opts)
         else:
             from appGUI.PlotCanvasLegacy import ShapeCollectionLegacy
             self.tool_shapes = ShapeCollectionLegacy(obj=self, app=self, name="tool")
@@ -1410,6 +1427,11 @@ class App(QtCore.QObject):
             self.inform.emit('[WARNING_NOTCL] %s' % _("Found old default preferences files. "
                                                       "Please reboot the application to update."))
             self.defaults.old_defaults_found = False
+
+        # ----- Auto-save crash recovery -----
+        if self.options.get('global_autosave') is True:
+            self.check_autosave_recovery()
+            self.autosave.create_session_marker()
 
     # ######################################### INIT FINISHED  #######################################################
     # #################################################################################################################
@@ -2804,7 +2826,16 @@ class App(QtCore.QObject):
             # is not printed over and over on the shell
             if msg != '' and shell_echo is True:
                 self.shell_message(msg)
-        QtWidgets.QApplication.processEvents()
+
+        # Throttle the event-loop pump. Forcing processEvents() on *every* status message
+        # flushed the entire Qt event queue re-entrantly; since inform.emit() fires
+        # constantly (progress, hovers, tool steps, "Ready", ...), this stalled the whole
+        # UI on every little update. Pump at most ~every 80 ms so the status bar still
+        # refreshes during long synchronous work without serializing all UI on each call.
+        now = time.monotonic()
+        if now - getattr(self, '_last_info_pump', 0.0) > 0.08:
+            self._last_info_pump = now
+            QtWidgets.QApplication.processEvents()
 
     def info_shell(self, msg, new_line=True):
         """
@@ -3848,6 +3879,13 @@ class App(QtCore.QObject):
 
         if silent is False:
             self.log.debug("App.quit_application() --> App Defaults saved.")
+
+        # auto-save: a clean exit means there is nothing to recover
+        try:
+            self.autosave.stop()
+            self.autosave.mark_clean_exit()
+        except Exception:
+            pass
 
         # hide the UI so the user experiments a faster shutdown
         self.ui.hide()
@@ -5990,18 +6028,19 @@ class App(QtCore.QObject):
 
                 # hover effect - enabled in Preferences -> General -> appGUI Settings
                 if self.options['global_hover_shape']:
+                    px, py = pos[0], pos[1]
+                    selected_objs = self.collection.get_selected()
                     for obj in self.collection.get_list():
                         try:
                             # select the object(s) only if it is enabled (plotted)
                             if obj.obj_options['plot']:
-                                if obj not in self.collection.get_selected():
-                                    poly_obj = Polygon(
-                                        [(obj.obj_options['xmin'], obj.obj_options['ymin']),
-                                         (obj.obj_options['xmax'], obj.obj_options['ymin']),
-                                         (obj.obj_options['xmax'], obj.obj_options['ymax']),
-                                         (obj.obj_options['xmin'], obj.obj_options['ymax'])]
-                                    )
-                                    if Point(pos).within(poly_obj):
+                                if obj not in selected_objs:
+                                    # Plain axis-aligned bounding-box test. The old code built
+                                    # a Shapely Polygon and ran Point.within() (a GEOS alloc +
+                                    # point-in-polygon query) for every object on every mouse
+                                    # move; a numeric bbox compare is equivalent here and free.
+                                    if (obj.obj_options['xmin'] <= px <= obj.obj_options['xmax'] and
+                                            obj.obj_options['ymin'] <= py <= obj.obj_options['ymax']):
                                         if obj.isHovering is False:
                                             obj.isHovering = True
                                             obj.notHovering = True
@@ -7819,32 +7858,48 @@ class App(QtCore.QObject):
             traceback.print_exc()
 
     def save_project_auto(self):
-        """
-        Called periodically to save the project.
-        It will save if there is no block on the save, if the project was saved at least once and if there is no save in
-        # progress.
-
-        :return:
-        """
-
-        if self.block_autosave is False and self.should_we_save is True and self.save_in_progress is False:
-            self.f_handlers.on_file_save_project()
+        """Periodic auto-save tick — delegated to AppAutoSave."""
+        self.autosave.do_snapshot()
 
     def save_project_auto_update(self):
-        """
-        Update the auto save time interval value.
-        :return:
-        """
+        """Re-read the auto-save interval / enabled flag and restart the timer."""
         self.log.debug("App.save_project_auto_update() --> updated the interval timeout.")
-        try:
-            if self.autosave_timer.isActive():
-                self.autosave_timer.stop()
-        except Exception:
-            pass
+        self.autosave.update_interval()
 
-        if self.options['global_autosave'] is True:
-            self.autosave_timer.setInterval(int(self.options['global_autosave_timeout']))
-            self.autosave_timer.start()
+    def check_autosave_recovery(self):
+        """
+        On launch, if a session marker from a previous *unclean* exit is found,
+        offer to restore the newest recovery snapshot.
+        """
+        marker = self.autosave.check_for_recovery()
+        if not marker:
+            return
+        snap = marker.get("snapshot") or newest_snapshot(self.data_path)
+        if not snap or not os.path.exists(snap):
+            # stale marker, nothing usable to restore
+            self.autosave.mark_clean_exit()
+            return
+
+        msgbox = QtWidgets.QMessageBox()
+        msgbox.setWindowTitle(_("Restore Auto-Saved Project"))
+        msgbox.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+        msgbox.setText(_("FlatCAM did not shut down cleanly."))
+        msgbox.setInformativeText(_("Restore your last auto-saved project?"))
+        btn_restore = msgbox.addButton(_("Restore"), QtWidgets.QMessageBox.ButtonRole.AcceptRole)
+        btn_discard = msgbox.addButton(_("Discard"), QtWidgets.QMessageBox.ButtonRole.DestructiveRole)
+        msgbox.addButton(_("Keep files"), QtWidgets.QMessageBox.ButtonRole.RejectRole)
+        msgbox.setDefaultButton(btn_restore)
+        msgbox.exec()
+        clicked = msgbox.clickedButton()
+
+        if clicked == btn_restore:
+            self.f_handlers.open_project(snap)
+            self.inform.emit('[success] %s' % _("Auto-saved project restored."))
+        elif clicked == btn_discard:
+            self.autosave.mark_clean_exit()
+        else:
+            # Keep files: drop only the stale marker so we don't re-prompt next launch
+            self.autosave.drop_marker()
 
     def on_defaults2options(self):
         """

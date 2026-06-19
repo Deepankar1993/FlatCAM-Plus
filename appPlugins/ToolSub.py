@@ -29,6 +29,7 @@ log = logging.getLogger('base')
 
 
 class ToolSub(AppTool):
+    plugin_tooltip = _("Subtracts one object's geometry from another (Gerber-from-Gerber or Geometry-from-Geometry), removing any overlapping features to leave just the difference. It is useful for cutting one shape out of another. Pick the target object and the object to subtract, then run it to create the resulting difference object.")
 
     job_finished = QtCore.pyqtSignal(bool)
 

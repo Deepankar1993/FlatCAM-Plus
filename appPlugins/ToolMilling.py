@@ -78,6 +78,7 @@ class HybridGeoExc:
 
 
 class ToolMilling(AppTool, Excellon):
+    plugin_tooltip = _("Generates milling G-Code from a Geometry object, or mills out the holes and slots of an Excellon object when a hole is too big to drill. It turns the toolpaths into a CNCJob with cut depth, multi-depth, feedrate, spindle and travel settings. Select a Geometry or Excellon object, set the milling parameters, then generate the CNCJob.")
     build_ui_sig = QtCore.pyqtSignal()
     launch_job = QtCore.pyqtSignal()
 

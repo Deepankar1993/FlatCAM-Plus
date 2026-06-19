@@ -6556,29 +6556,31 @@ class CNCjob(Geometry):
                         continue
 
                     if geo['kind'][0] == 'T':
-                        start_position = geo['geom'].coords[0]
+                        ann = obj.annotations_dict.get(tooldia)
+                        if ann is None:
+                            ann = {'pos': [], 'text': [], 'pos_set': set()}
+                            obj.annotations_dict[tooldia] = ann
+                        elif 'pos_set' not in ann:
+                            # rebuild the O(1) membership set for dicts created elsewhere
+                            ann['pos_set'] = set(ann['pos'])
 
-                        if tooldia not in obj.annotations_dict:
-                            obj.annotations_dict[tooldia] = {
-                                'pos': [],
-                                'text': []
-                            }
-                        if start_position not in obj.annotations_dict[tooldia]['pos']:
+                        # Use a set for the "already annotated this position" test. The old
+                        # `pos not in [...]['pos']` scanned a growing list on every travel
+                        # point -> O(n^2) on dense jobs (the dominant cost of plotting a CNC
+                        # job). Set membership keeps the same semantics in O(1).
+                        start_position = geo['geom'].coords[0]
+                        if start_position not in ann['pos_set']:
                             path_num += 1
-                            obj.annotations_dict[tooldia]['pos'].append(start_position)
-                            obj.annotations_dict[tooldia]['text'].append(str(path_num))
+                            ann['pos'].append(start_position)
+                            ann['pos_set'].add(start_position)
+                            ann['text'].append(str(path_num))
 
                         end_position = geo['geom'].coords[-1]
-
-                        if tooldia not in obj.annotations_dict:
-                            obj.annotations_dict[tooldia] = {
-                                'pos': [],
-                                'text': []
-                            }
-                        if end_position not in obj.annotations_dict[tooldia]['pos']:
+                        if end_position not in ann['pos_set']:
                             path_num += 1
-                            obj.annotations_dict[tooldia]['pos'].append(end_position)
-                            obj.annotations_dict[tooldia]['text'].append(str(path_num))
+                            ann['pos'].append(end_position)
+                            ann['pos_set'].add(end_position)
+                            ann['text'].append(str(path_num))
 
                     # plot the geometry of Excellon objects
                     if self.obj_options['type'].lower() == 'excellon':

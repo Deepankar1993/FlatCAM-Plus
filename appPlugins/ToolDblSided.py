@@ -26,6 +26,7 @@ log = logging.getLogger('base')
 
 
 class DblSidedTool(AppTool):
+    plugin_tooltip = _("Helps make two-sided PCBs by mirroring objects about an axis and working out the alignment and drill reference points, so the bottom layer lines up with the top after you flip the board. Select the object to mirror and the mirror axis (and optional reference point), then create the mirrored object and alignment drills.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

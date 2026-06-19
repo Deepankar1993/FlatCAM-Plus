@@ -39,6 +39,7 @@ log = logging.getLogger('base')
 
 
 class ToolIsolation(AppTool, Gerber):
+    plugin_tooltip = _("Creates the toolpaths that mill away copper around the tracks and pads of a Gerber object, so the tracks end up electrically isolated from each other. It works by offsetting one or more passes of a chosen tool diameter around every copper feature. Pick a Gerber object, set the tool diameter and number of passes, then click Generate Geometry to get a Geometry object you can later convert into milling G-Code.")
     optimal_found_sig = QtCore.pyqtSignal(float)
 
     def __init__(self, app):

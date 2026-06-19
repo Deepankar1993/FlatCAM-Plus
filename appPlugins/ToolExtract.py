@@ -27,6 +27,7 @@ log = logging.getLogger('base')
 
 
 class ToolExtract(AppTool):
+    plugin_tooltip = _("Pulls drill holes and/or soldermask geometry out of a Gerber object, based on its pad shapes and apertures. The holes are produced as a new Excellon object and the soldermask as a Gerber/Geometry object. Select a Gerber object, choose what to extract and the method, then run it to create the new object(s).")
 
     def __init__(self, app):
         AppTool.__init__(self, app)
