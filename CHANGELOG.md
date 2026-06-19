@@ -8,6 +8,13 @@ CHANGELOG for FlatCAM Evo beta
 
 =================================================
 
+19.06.2026  (detailed tooltips & feature docs)
+
+- Tooltips: expanded the menu and plugin tooltips into proper beginner help. Every menu / editor-menu / right-click action in MainGUI.py now has a detailed tooltip explaining what it is, what it does and how/when to use it (with the keyboard shortcut where applicable), while the status-bar tip stays a short one-liner. All 34 plugin/tool menu actions now carry a 2-4 sentence description (what it produces, how it works, and the workflow: pick input object -> set params -> click -> get output object).
+- Docs: added/finished FEATURES.md, a complete reference of every menu, toolbar, shortcut, object type, editor, plugin, file format, preprocessor, Tcl command and preferences category. Rebranded its product self-references from "FlatCAM Evo" to "FlatCAM Plus" (keeping the accurate "based on FlatCAM Evo" lineage credit) and verified its catalog against the source tree.
+
+=================================================
+
 18.06.2026  (performance, etch fixes, rebrand, tooltips)
 
 - Performance: fixed the heavy sluggishness that appeared once a Gerber was loaded. Root cause: the "big cursor" crosshair (PlotCanvas.on_mouse_position) called self.view.scene.update() on EVERY mouse-position event, forcing a full repaint of the entire scene — whose cost scales with the loaded geometry. The crosshair buffers are still updated every event (cheap), but the full-scene repaint is now throttled to ~66 Hz with a guaranteed trailing repaint so the crosshair still tracks smoothly and lands on the final position at rest. (The small-cursor default path was never affected.)

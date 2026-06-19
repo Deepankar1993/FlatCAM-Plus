@@ -33,7 +33,7 @@ log = logging.getLogger('base')
 class Panelize(AppTool):
 
     pluginName = _("Panelize PCB")
-    plugin_tooltip = _("Replicate an object into a rows x columns panel for batch manufacturing.")
+    plugin_tooltip = _("Replicates a source object into a rows x columns array (a panel) with the spacing you choose, so many copies can be made in one manufacturing run. It produces a single panelized object containing all the copies. Select the object to panelize, set the number of rows, columns and spacing, then run it to create the panel object.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

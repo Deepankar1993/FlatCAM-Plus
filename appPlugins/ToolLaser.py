@@ -28,7 +28,7 @@ log = logging.getLogger('base')
 
 
 class ToolLaser(AppTool):
-    plugin_tooltip = _("Generate laser-engraving/cutting G-Code with S-power control for laser engravers.")
+    plugin_tooltip = _("Generates laser engraving or cutting G-Code aimed at laser engravers, using S-power commands to control the beam instead of a spinning cutter. It builds laser-mode toolpaths from your geometry and exports the job. Select the source object, set the laser power and feedrate parameters, then generate and export the laser CNCJob.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

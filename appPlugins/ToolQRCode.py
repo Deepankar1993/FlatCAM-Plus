@@ -40,7 +40,7 @@ log = logging.getLogger('base')
 
 
 class QRCode(AppTool):
-    plugin_tooltip = _("Generate a QR code and render it as Gerber geometry to place on the PCB.")
+    plugin_tooltip = _("Generates a QR code from text you enter (for example a URL or serial number) and renders it as Gerber geometry you can place on the board. Type the text, choose the size, error-correction and colors, then create the QR code object and drop it onto the PCB.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

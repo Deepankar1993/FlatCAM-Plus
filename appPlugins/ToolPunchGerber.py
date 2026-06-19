@@ -33,7 +33,7 @@ log = logging.getLogger('base')
 
 
 class ToolPunchGerber(AppTool, Gerber):
-    plugin_tooltip = _("Punch holes in the pads of a Gerber so the pads become annular rings.")
+    plugin_tooltip = _("Removes the center of each pad in a Gerber object so the solid pads become annular rings (donuts), leaving room for the drilled hole. The hole size can be a fixed value, a proportion of the pad, or taken from a matching Excellon file. Select a Gerber object, choose the punch method and size, then run it to produce the punched Gerber.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

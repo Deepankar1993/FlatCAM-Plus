@@ -118,7 +118,9 @@ class MainGUI(QtWidgets.QMainWindow):
         self.menu_toggle_nb = QtGui.QAction(
             QtGui.QIcon(self.app.resource_location + '/notebook32.png'), _("Toggle Panel"))
         self.menu_toggle_nb.setToolTip(
-            _("Toggle Panel")
+            _("Show or hide the left-hand panel that holds the Project, Properties and "
+              "Tool tabs. Hide it to give the drawing area more room, then click again "
+              "to bring it back.")
         )
         # self.menu_toggle_nb = QtGui.QAction("NB")
 
@@ -135,9 +137,11 @@ class MainGUI(QtWidgets.QMainWindow):
         self.menufilenewproject = QtGui.QAction(QtGui.QIcon(self.app.resource_location + '/file16.png'),
                                                 '%s...\t%s' % (_('New Project'), _("Ctrl+N")), self)
         self.menufilenewproject.setToolTip(
-            _("Will create a new, blank project")
+            _("Start a brand new, empty project (Ctrl+N). This clears the current work "
+              "area so you can begin again. If you have unsaved changes you will be "
+              "asked to save them first.")
         )
-        self.menufilenewproject.setStatusTip(_("Will create a new, blank project"))
+        self.menufilenewproject.setStatusTip(_("Create a new, blank project."))
         self.menufile.addAction(self.menufilenewproject)
 
         # New Category (Excellon, Geometry)
@@ -147,24 +151,33 @@ class MainGUI(QtWidgets.QMainWindow):
         self.menufilenewgeo = self.menufilenew.addAction(
             QtGui.QIcon(self.app.resource_location + '/new_file_geo16.png'), '%s\t%s' % (_('Geometry'), _('N')))
         self.menufilenewgeo.setToolTip(
-            _("Will create a new, empty Geometry Object.")
+            _("Create a new, empty Geometry object (shortcut: N). A Geometry object holds "
+              "tool-path shapes (lines and polygons) that can be turned into G-Code for "
+              "milling. Use this when you want to draw paths from scratch in the Geometry "
+              "Editor.")
         )
         self.menufilenewgrb = self.menufilenew.addAction(
             QtGui.QIcon(self.app.resource_location + '/new_file_grb16.png'), '%s\t%s' % (_('Gerber'), _('B')))
         self.menufilenewgrb.setToolTip(
-            _("Will create a new, empty Gerber Object.")
+            _("Create a new, empty Gerber object (shortcut: B). A Gerber object represents "
+              "a copper layer, solder mask or silkscreen. Use this when you want to build "
+              "or edit copper artwork by hand in the Gerber Editor.")
         )
         self.menufilenewexc = self.menufilenew.addAction(
             QtGui.QIcon(self.app.resource_location + '/new_file_exc16.png'), '%s\t%s' % (_('Excellon'), _('L')))
         self.menufilenewexc.setToolTip(
-            _("Will create a new, empty Excellon Object.")
+            _("Create a new, empty Excellon object (shortcut: L). An Excellon object holds "
+              "the drill holes and slots of a board. Use this when you want to place holes "
+              "by hand in the Excellon Editor.")
         )
         self.menufilenew.addSeparator()
 
         self.menufilenewdoc = self.menufilenew.addAction(
             QtGui.QIcon(self.app.resource_location + '/notes16_1.png'), '%s\t%s' % (_('Document'), _('D')))
         self.menufilenewdoc.setToolTip(
-            _("Will create a new, empty Document Object.")
+            _("Create a new, empty Document object (shortcut: D). A Document is a simple "
+              "rich-text notes page stored inside the project, handy for writing down "
+              "instructions or reminders about the job. It contains no geometry.")
         )
 
         self.menufile_open = self.menufile.addMenu(
@@ -175,29 +188,45 @@ class MainGUI(QtWidgets.QMainWindow):
         self.menufileopenproject = QtGui.QAction(
             QtGui.QIcon(self.app.resource_location + '/folder16.png'), '%s...\t%s' % (_('Open Project'), _('Ctrl+O')),
             self)
-        self.menufileopenproject.setToolTip(_("Open a saved FlatCAM project file (.FlatPrj)."))
-        self.menufileopenproject.setStatusTip(_("Open a saved FlatCAM project file (.FlatPrj)."))
+        self.menufileopenproject.setToolTip(
+            _("Open a previously saved project file (.FlatPrj) (Ctrl+O). This restores all "
+              "the objects, settings and layout you saved earlier. Any work currently open "
+              "is replaced, so save first if you need it.")
+        )
+        self.menufileopenproject.setStatusTip(_("Open a saved project file (.FlatPrj)."))
         self.menufile_open.addAction(self.menufileopenproject)
         self.menufile_open.addSeparator()
 
         # Open Gerber ...
         self.menufileopengerber = QtGui.QAction(QtGui.QIcon(self.app.resource_location + '/open_gerber32.png'),
                                                 '%s...\t%s' % (_('Open Gerber'), _('Ctrl+G')), self)
-        self.menufileopengerber.setToolTip(_("Load a Gerber file (copper layers, solder mask, silkscreen) as an object."))
-        self.menufileopengerber.setStatusTip(_("Load a Gerber file (copper layers, solder mask, silkscreen) as an object."))
+        self.menufileopengerber.setToolTip(
+            _("Load a Gerber file into the project (Ctrl+G). Gerber files (.gbr and similar) "
+              "describe the copper, solder mask or silkscreen layers of a PCB. The loaded "
+              "layer becomes a Gerber object you can then isolate, paint or edit.")
+        )
+        self.menufileopengerber.setStatusTip(_("Load a Gerber file as an object."))
         self.menufile_open.addAction(self.menufileopengerber)
 
         # Open Excellon ...
         self.menufileopenexcellon = QtGui.QAction(QtGui.QIcon(self.app.resource_location + '/open_excellon32.png'),
                                                   '%s...\t%s' % (_('Open Excellon'), _('Ctrl+E')), self)
-        self.menufileopenexcellon.setToolTip(_("Load an Excellon drill file as an object."))
+        self.menufileopenexcellon.setToolTip(
+            _("Load an Excellon drill file into the project (Ctrl+E). Excellon files list the "
+              "hole positions and diameters of a PCB. The loaded file becomes an Excellon "
+              "object from which you can generate drilling G-Code.")
+        )
         self.menufileopenexcellon.setStatusTip(_("Load an Excellon drill file as an object."))
         self.menufile_open.addAction(self.menufileopenexcellon)
 
         # Open G-Code ...
         self.menufileopengcode = QtGui.QAction(
             QtGui.QIcon(self.app.resource_location + '/code.png'), '%s...\t%s' % (_('Open G-Code'), ''), self)
-        self.menufileopengcode.setToolTip(_("Load a G-Code file into a CNC Job object."))
+        self.menufileopengcode.setToolTip(
+            _("Load an existing G-Code file into a CNC Job object. Use this to preview, plot "
+              "or re-export machine code that was generated earlier or by another program. "
+              "The toolpaths are shown on the Plot Area.")
+        )
         self.menufileopengcode.setStatusTip(_("Load a G-Code file into a CNC Job object."))
         self.menufile_open.addAction(self.menufileopengcode)
 
@@ -206,17 +235,29 @@ class MainGUI(QtWidgets.QMainWindow):
         # Open Config File...
         self.menufileopenconfig = QtGui.QAction(
             QtGui.QIcon(self.app.resource_location + '/folder16.png'), '%s...\t%s' % (_('Open Config'), ''), self)
-        self.menufileopenconfig.setToolTip(_("Load a FlatCAM configuration file."))
-        self.menufileopenconfig.setStatusTip(_("Load a FlatCAM configuration file."))
+        self.menufileopenconfig.setToolTip(
+            _("Load a configuration file that contains a saved set of preferences. This lets "
+              "you switch the whole application over to a different saved setup, for example "
+              "settings tuned for a particular machine.")
+        )
+        self.menufileopenconfig.setStatusTip(_("Load a configuration file."))
         self.menufile_open.addAction(self.menufileopenconfig)
 
         # Recent
         self.recent_projects = self.menufile.addMenu(
             QtGui.QIcon(self.app.resource_location + '/recent_files.png'), _("Recent projects"))
         self.recent_projects.setToolTipsVisible(True)
+        self.recent_projects.setToolTip(
+            _("A list of the project files you opened most recently. Pick one to reopen it "
+              "quickly without having to browse for the file.")
+        )
         self.recent = self.menufile.addMenu(
             QtGui.QIcon(self.app.resource_location + '/recent_files.png'), _("Recent files"))
         self.recent.setToolTipsVisible(True)
+        self.recent.setToolTip(
+            _("A list of the source files (Gerber, Excellon, G-Code, etc.) you opened most "
+              "recently. Pick one to reload it quickly.")
+        )
 
         # SAVE category
         self.menufile_save = self.menufile.addMenu(QtGui.QIcon(self.app.resource_location + '/save_as.png'), _('Save'))
@@ -226,14 +267,22 @@ class MainGUI(QtWidgets.QMainWindow):
         self.menufilesaveproject = QtGui.QAction(
             QtGui.QIcon(self.app.resource_location + '/floppy16.png'), '%s...\t%s' % (_('Save Project'), _('Ctrl+S')),
             self)
-        self.menufilesaveproject.setToolTip(_("Save the current project to its file."))
-        self.menufilesaveproject.setStatusTip(_("Save the current project to its file."))
+        self.menufilesaveproject.setToolTip(
+            _("Save the current project to its file (Ctrl+S). All objects and settings are "
+              "written back to the .FlatPrj file you opened or last saved. If the project "
+              "has no file yet you will be asked for a name.")
+        )
+        self.menufilesaveproject.setStatusTip(_("Save the current project."))
         self.menufile_save.addAction(self.menufilesaveproject)
 
         # Save Project As ...
         self.menufilesaveprojectas = QtGui.QAction(QtGui.QIcon(self.app.resource_location + '/floppy16.png'),
                                                    '%s...\t%s' % (_('Save Project As'), _('Ctrl+Shift+S')), self)
-        self.menufilesaveprojectas.setToolTip(_("Save the current project to a new file name."))
+        self.menufilesaveprojectas.setToolTip(
+            _("Save the current project under a new file name (Ctrl+Shift+S). Use this to "
+              "keep your original file untouched while saving a copy, or to store the "
+              "project in a different folder.")
+        )
         self.menufilesaveprojectas.setStatusTip(_("Save the current project to a new file name."))
         self.menufile_save.addAction(self.menufilesaveprojectas)
 
@@ -254,25 +303,38 @@ class MainGUI(QtWidgets.QMainWindow):
 
         self.menufilenewscript = QtGui.QAction(QtGui.QIcon(self.app.resource_location + '/script_new16.png'),
                                                '%s...\t%s' % (_('New Script'), ''), self)
-        self.menufilenewscript.setToolTip(_("Create a new, empty Tcl script object."))
+        self.menufilenewscript.setToolTip(
+            _("Create a new, empty Tcl script object. Tcl scripts let you automate FlatCAM "
+              "by running commands one after another. A starter template is added so you "
+              "can begin typing commands straight away.")
+        )
         self.menufilenewscript.setStatusTip(_("Create a new, empty Tcl script object."))
         self.menufileopenscript = QtGui.QAction(QtGui.QIcon(self.app.resource_location + '/open_script32.png'),
                                                 '%s...\t%s' % (_('Open Script'), ''), self)
-        self.menufileopenscript.setToolTip(_("Open an existing Tcl script file."))
+        self.menufileopenscript.setToolTip(
+            _("Open an existing Tcl script file from disk. The script is loaded into a "
+              "script object where you can read, edit and then run it to automate a series "
+              "of FlatCAM actions.")
+        )
         self.menufileopenscript.setStatusTip(_("Open an existing Tcl script file."))
         self.menufileopenscriptexample = QtGui.QAction(
             QtGui.QIcon(self.app.resource_location + '/open_script32.png'),
             '%s...\t%s' % (_('Open Example'), ''), self)
-        self.menufileopenscriptexample.setToolTip(_("Open one of the bundled example Tcl scripts."))
-        self.menufileopenscriptexample.setStatusTip(_("Open one of the bundled example Tcl scripts."))
+        self.menufileopenscriptexample.setToolTip(
+            _("Open one of the example Tcl scripts that ship with FlatCAM. These are a good "
+              "starting point for learning how scripting works; you can run them as-is or "
+              "copy parts into your own scripts.")
+        )
+        self.menufileopenscriptexample.setStatusTip(_("Open a bundled example Tcl script."))
         self.menufilerunscript = QtGui.QAction(
             QtGui.QIcon(self.app.resource_location + '/script16.png'),
             '%s...\t%s' % (_('Run Script'), _('Shift+S')), self)
         self.menufilerunscript.setToolTip(
-            _("Will run the opened Tcl Script thus\n"
-              "enabling the automation of certain\n"
-              "functions of FlatCAM.")
+            _("Run the currently opened Tcl script (Shift+S). Every command in the script is "
+              "executed in order, automating tasks such as loading files and generating "
+              "G-Code. Watch the Tcl shell for the script's output and any errors.")
         )
+        self.menufilerunscript.setStatusTip(_("Run the opened Tcl script."))
         self.menufile_scripting.addAction(self.menufilenewscript)
         self.menufile_scripting.addAction(self.menufileopenscript)
         self.menufile_scripting.addAction(self.menufileopenscriptexample)
@@ -289,35 +351,55 @@ class MainGUI(QtWidgets.QMainWindow):
         self.menufileimportsvg = QtGui.QAction(
             QtGui.QIcon(self.app.resource_location + '/svg16.png'),
             '%s...\t%s' % (_('SVG as Geometry Object'), ''), self)
-        self.menufileimportsvg.setToolTip(_("Import an SVG drawing and convert it into a Geometry object."))
-        self.menufileimportsvg.setStatusTip(_("Import an SVG drawing and convert it into a Geometry object."))
+        self.menufileimportsvg.setToolTip(
+            _("Import an SVG vector drawing and turn it into a Geometry object. The SVG paths "
+              "become tool-path shapes you can mill. Use this to bring in artwork or shapes "
+              "drawn in a vector editor such as Inkscape.")
+        )
+        self.menufileimportsvg.setStatusTip(_("Import an SVG as a Geometry object."))
         self.menufileimport.addAction(self.menufileimportsvg)
         self.menufileimportsvg_as_gerber = QtGui.QAction(
             QtGui.QIcon(self.app.resource_location + '/svg16.png'),
             '%s...\t%s' % (_('SVG as Gerber Object'), ''), self)
-        self.menufileimportsvg_as_gerber.setToolTip(_("Import an SVG drawing and convert it into a Gerber object."))
-        self.menufileimportsvg_as_gerber.setStatusTip(_("Import an SVG drawing and convert it into a Gerber object."))
+        self.menufileimportsvg_as_gerber.setToolTip(
+            _("Import an SVG vector drawing and turn it into a Gerber object. The filled SVG "
+              "shapes are treated as copper. Use this to create copper artwork (for example "
+              "a logo) from a drawing made in a vector editor.")
+        )
+        self.menufileimportsvg_as_gerber.setStatusTip(_("Import an SVG as a Gerber object."))
         self.menufileimport.addAction(self.menufileimportsvg_as_gerber)
         self.menufileimport.addSeparator()
 
         self.menufileimportdxf = QtGui.QAction(
             QtGui.QIcon(self.app.resource_location + '/dxf16.png'),
             '%s...\t%s' % (_('DXF as Geometry Object'), ''), self)
-        self.menufileimportdxf.setToolTip(_("Import a DXF drawing and convert it into a Geometry object."))
-        self.menufileimportdxf.setStatusTip(_("Import a DXF drawing and convert it into a Geometry object."))
+        self.menufileimportdxf.setToolTip(
+            _("Import a DXF CAD drawing and turn it into a Geometry object. The DXF lines and "
+              "curves become tool-path shapes you can mill. Use this to bring in outlines or "
+              "mechanical drawings made in a CAD program.")
+        )
+        self.menufileimportdxf.setStatusTip(_("Import a DXF as a Geometry object."))
         self.menufileimport.addAction(self.menufileimportdxf)
         self.menufileimportdxf_as_gerber = QtGui.QAction(
             QtGui.QIcon(self.app.resource_location + '/dxf16.png'),
             '%s...\t%s' % (_('DXF as Gerber Object'), ''), self)
-        self.menufileimportdxf_as_gerber.setToolTip(_("Import a DXF drawing and convert it into a Gerber object."))
-        self.menufileimportdxf_as_gerber.setStatusTip(_("Import a DXF drawing and convert it into a Gerber object."))
+        self.menufileimportdxf_as_gerber.setToolTip(
+            _("Import a DXF CAD drawing and turn it into a Gerber object. The closed DXF "
+              "shapes are treated as copper. Use this to create copper artwork from a "
+              "drawing made in a CAD program.")
+        )
+        self.menufileimportdxf_as_gerber.setStatusTip(_("Import a DXF as a Gerber object."))
         self.menufileimport.addAction(self.menufileimportdxf_as_gerber)
         self.menufileimport.addSeparator()
         self.menufileimport_hpgl2_as_geo = QtGui.QAction(
             QtGui.QIcon(self.app.resource_location + '/dxf16.png'),
             '%s...\t%s' % (_('HPGL2 as Geometry Object'), ''), self)
-        self.menufileimport_hpgl2_as_geo.setToolTip(_("Import an HPGL2 plot file and convert it into a Geometry object."))
-        self.menufileimport_hpgl2_as_geo.setStatusTip(_("Import an HPGL2 plot file and convert it into a Geometry object."))
+        self.menufileimport_hpgl2_as_geo.setToolTip(
+            _("Import an HPGL2 plotter file and turn it into a Geometry object. HPGL2 is an "
+              "older pen-plotter format; its pen movements become tool-path shapes you can "
+              "mill.")
+        )
+        self.menufileimport_hpgl2_as_geo.setStatusTip(_("Import an HPGL2 file as a Geometry object."))
         self.menufileimport.addAction(self.menufileimport_hpgl2_as_geo)
         self.menufileimport.addSeparator()
 
@@ -329,15 +411,23 @@ class MainGUI(QtWidgets.QMainWindow):
         self.menufileexportsvg = QtGui.QAction(
             QtGui.QIcon(self.app.resource_location + '/export.png'),
             '%s...\t%s' % (_('Export SVG'), ''), self)
-        self.menufileexportsvg.setToolTip(_("Export the selected object as an SVG drawing file."))
-        self.menufileexportsvg.setStatusTip(_("Export the selected object as an SVG drawing file."))
+        self.menufileexportsvg.setToolTip(
+            _("Save the selected object as an SVG vector drawing. Use this to share or edit "
+              "the shapes in a vector graphics program, or to print artwork. Select the "
+              "object first, then choose this item.")
+        )
+        self.menufileexportsvg.setStatusTip(_("Export the selected object as an SVG file."))
         self.menufileexport.addAction(self.menufileexportsvg)
 
         self.menufileexportdxf = QtGui.QAction(
             QtGui.QIcon(self.app.resource_location + '/export.png'),
             '%s...\t%s' % (_('Export DXF'), ''), self)
-        self.menufileexportdxf.setToolTip(_("Export the selected Geometry object as a DXF drawing file."))
-        self.menufileexportdxf.setStatusTip(_("Export the selected Geometry object as a DXF drawing file."))
+        self.menufileexportdxf.setToolTip(
+            _("Save the selected Geometry object as a DXF CAD file. Use this to open the "
+              "shapes in a CAD program for further drawing or measurement. Select a Geometry "
+              "object first, then choose this item.")
+        )
+        self.menufileexportdxf.setStatusTip(_("Export the selected Geometry object as a DXF file."))
         self.menufileexport.addAction(self.menufileexportdxf)
 
         self.menufileexport.addSeparator()
@@ -346,10 +436,11 @@ class MainGUI(QtWidgets.QMainWindow):
             QtGui.QIcon(self.app.resource_location + '/export_png32.png'),
             '%s...\t%s' % (_('Export PNG'), ''), self)
         self.menufileexportpng.setToolTip(
-            _("Will export an image in PNG format,\n"
-              "the saved image will contain the visual \n"
-              "information currently in FlatCAM Plot Area.")
+            _("Save a picture of the Plot Area as a PNG image. The image captures exactly "
+              "what is currently shown on screen, so arrange and zoom the view the way you "
+              "want it before exporting. Handy for documentation or sharing a preview.")
         )
+        self.menufileexportpng.setStatusTip(_("Export the Plot Area as a PNG image."))
         self.menufileexport.addAction(self.menufileexportpng)
 
         self.menufileexport.addSeparator()
@@ -358,20 +449,22 @@ class MainGUI(QtWidgets.QMainWindow):
             QtGui.QIcon(self.app.resource_location + '/drill32.png'),
             '%s...\t%s' % (_('Export Excellon'), ''), self)
         self.menufileexportexcellon.setToolTip(
-            _("Will export an Excellon Object as Excellon file,\n"
-              "the coordinates format, the file units and zeros\n"
-              "are set in Preferences -> Excellon Export.")
+            _("Save the selected Excellon object back out as an Excellon drill file. The "
+              "number format, units and zero handling come from Preferences -> Excellon "
+              "Export, so check those settings if your machine expects a particular format.")
         )
+        self.menufileexportexcellon.setStatusTip(_("Export an Excellon object as an Excellon file."))
         self.menufileexport.addAction(self.menufileexportexcellon)
 
         self.menufileexportgerber = QtGui.QAction(
             QtGui.QIcon(self.app.resource_location + '/flatcam_icon32.png'),
             '%s...\t%s' % (_('Export Gerber'), ''), self)
         self.menufileexportgerber.setToolTip(
-            _("Will export an Gerber Object as Gerber file,\n"
-              "the coordinates format, the file units and zeros\n"
-              "are set in Preferences -> Gerber Export.")
+            _("Save the selected Gerber object back out as a Gerber file. The number format, "
+              "units and zero handling come from Preferences -> Gerber Export, so check "
+              "those settings if your fabricator expects a particular format.")
         )
+        self.menufileexportgerber.setStatusTip(_("Export a Gerber object as a Gerber file."))
         self.menufileexport.addAction(self.menufileexportgerber)
 
         # Separator
@@ -386,16 +479,24 @@ class MainGUI(QtWidgets.QMainWindow):
             QtGui.QIcon(self.app.resource_location + '/backup_import24.png'),
             '%s...\t%s' % (_('Import Preferences from file'), ''), self
         )
-        self.menufileimportpref.setToolTip(_("Load application preferences from a saved backup file."))
-        self.menufileimportpref.setStatusTip(_("Load application preferences from a saved backup file."))
+        self.menufileimportpref.setToolTip(
+            _("Load all application preferences from a backup file you saved earlier. This "
+              "replaces your current settings, so it is a quick way to restore a known-good "
+              "setup or copy settings from another computer.")
+        )
+        self.menufileimportpref.setStatusTip(_("Load preferences from a backup file."))
         self.menufile_backup.addAction(self.menufileimportpref)
 
         # Export Preferences
         self.menufileexportpref = QtGui.QAction(
             QtGui.QIcon(self.app.resource_location + '/backup_export24.png'),
             '%s...\t%s' % (_('Export Preferences to file'), ''), self)
-        self.menufileexportpref.setToolTip(_("Save the current application preferences to a backup file."))
-        self.menufileexportpref.setStatusTip(_("Save the current application preferences to a backup file."))
+        self.menufileexportpref.setToolTip(
+            _("Save all your current preferences to a backup file. Keep this file safe so you "
+              "can restore your settings later, or share it with another computer using "
+              "Import Preferences.")
+        )
+        self.menufileexportpref.setStatusTip(_("Save the current preferences to a backup file."))
         self.menufile_backup.addAction(self.menufileexportpref)
 
         # Separator
@@ -405,8 +506,12 @@ class MainGUI(QtWidgets.QMainWindow):
         self.menufilesavedefaults = QtGui.QAction(
             QtGui.QIcon(self.app.resource_location + '/defaults.png'),
             '%s\t%s' % (_('Save Preferences'), ''), self)
-        self.menufilesavedefaults.setToolTip(_("Save the current preferences so they persist between sessions."))
-        self.menufilesavedefaults.setStatusTip(_("Save the current preferences so they persist between sessions."))
+        self.menufilesavedefaults.setToolTip(
+            _("Make your current preferences the defaults so they are remembered the next "
+              "time you start the program. Use this after changing settings you want to "
+              "keep permanently.")
+        )
+        self.menufilesavedefaults.setStatusTip(_("Save the current preferences as the defaults."))
         self.menufile_backup.addAction(self.menufilesavedefaults)
 
         # Separator
@@ -414,8 +519,12 @@ class MainGUI(QtWidgets.QMainWindow):
         self.menufile_print = QtGui.QAction(
             QtGui.QIcon(self.app.resource_location + '/printer32.png'),
             '%s\t%s' % (_('Print (PDF)'), _('Ctrl+P')))
-        self.menufile_print.setToolTip(_("Print the Plot Area to a PDF file."))
-        self.menufile_print.setStatusTip(_("Print the Plot Area to a PDF file."))
+        self.menufile_print.setToolTip(
+            _("Print the project to a PDF file (Ctrl+P). This produces a paper-style document "
+              "of your objects that you can save or print, useful for keeping a record or "
+              "checking the layout at 1:1 scale.")
+        )
+        self.menufile_print.setStatusTip(_("Print the project to a PDF file."))
         self.menufile.addAction(self.menufile_print)
 
         # Separator
@@ -427,8 +536,11 @@ class MainGUI(QtWidgets.QMainWindow):
             '%s\t%s' % (_('Exit'), ''), self)
         # exitAction.setShortcut('Ctrl+Q')
         # exitAction.setStatusTip('Exit application')
-        self.menufile_exit.setToolTip(_("Close FlatCAM."))
-        self.menufile_exit.setStatusTip(_("Close FlatCAM."))
+        self.menufile_exit.setToolTip(
+            _("Close the application. If you have unsaved changes you will be asked whether "
+              "to save them before quitting.")
+        )
+        self.menufile_exit.setStatusTip(_("Close the application."))
         self.menufile.addAction(self.menufile_exit)
 
         # ########################################################################
@@ -441,13 +553,21 @@ class MainGUI(QtWidgets.QMainWindow):
         self.menueditedit = self.menuedit.addAction(
             QtGui.QIcon(self.app.resource_location + '/edit16.png'),
             '%s\t%s' % (_('Edit Object'), _('E')))
-        self.menueditedit.setToolTip(_("Open the selected object in its interactive editor."))
-        self.menueditedit.setStatusTip(_("Open the selected object in its interactive editor."))
+        self.menueditedit.setToolTip(
+            _("Open the selected object in its interactive editor (shortcut: E). This lets "
+              "you change the object by hand - drawing or moving copper, pads, holes or "
+              "shapes. The editor that opens depends on the object type.")
+        )
+        self.menueditedit.setStatusTip(_("Edit the selected object."))
         self.menueditok = self.menuedit.addAction(
             QtGui.QIcon(self.app.resource_location + '/power16.png'),
             '%s\t%s' % (_('Exit Editor'), _('Ctrl+S')))
-        self.menueditok.setToolTip(_("Leave the editor and apply the changes to the object."))
-        self.menueditok.setStatusTip(_("Leave the editor and apply the changes to the object."))
+        self.menueditok.setToolTip(
+            _("Leave the editor and save your changes back into the object (Ctrl+S). This is "
+              "only available while you are editing. Use it when you have finished drawing "
+              "or modifying shapes.")
+        )
+        self.menueditok.setStatusTip(_("Exit the editor and apply the changes."))
 
         # adjust the initial state of the menu entries related to the editor
         self.menueditedit.setDisabled(False)
@@ -463,33 +583,49 @@ class MainGUI(QtWidgets.QMainWindow):
             QtGui.QIcon(self.app.resource_location + '/convert24.png'),
             '%s\t%s' % (_('Convert Single to MultiGeo'), ''))
         self.menuedit_convert_sg2mg.setToolTip(
-            _("Will convert a Geometry object from single_geometry type\n"
-              "to a multi_geometry type.")
+            _("Change a single-geometry object into a multi-geometry one. In a multi-geometry "
+              "object each tool keeps its own separate shapes, which lets you assign "
+              "different tools and cutting settings to different parts of the work.")
         )
+        self.menuedit_convert_sg2mg.setStatusTip(_("Convert single-geometry to multi-geometry."))
         self.menuedit_convert_mg2sg = self.menuedit_convert.addAction(
             QtGui.QIcon(self.app.resource_location + '/convert24.png'),
             '%s\t%s' % (_('Convert Multi to SingleGeo'), ''))
         self.menuedit_convert_mg2sg.setToolTip(
-            _("Will convert a Geometry object from multi_geometry type\n"
-              "to a single_geometry type.")
+            _("Change a multi-geometry object into a single-geometry one, merging all the "
+              "per-tool shapes into one set. Use this when you no longer need separate tools "
+              "and want a simpler object.")
         )
+        self.menuedit_convert_mg2sg.setStatusTip(_("Convert multi-geometry to single-geometry."))
         # Separator
         self.menuedit_convert.addSeparator()
         self.menueditconvert_any2geo = self.menuedit_convert.addAction(
             QtGui.QIcon(self.app.resource_location + '/copy_geo.png'),
             '%s\t%s' % (_('Convert Any to Geo'), ''))
-        self.menueditconvert_any2geo.setToolTip(_("Convert the selected object into a Geometry object."))
-        self.menueditconvert_any2geo.setStatusTip(_("Convert the selected object into a Geometry object."))
+        self.menueditconvert_any2geo.setToolTip(
+            _("Convert the selected object(s) into a Geometry object. This turns a Gerber or "
+              "Excellon into plain tool-path shapes, which you can then edit freely or mill "
+              "without the original copper/drill meaning.")
+        )
+        self.menueditconvert_any2geo.setStatusTip(_("Convert the selection into a Geometry object."))
         self.menueditconvert_any2gerber = self.menuedit_convert.addAction(
             QtGui.QIcon(self.app.resource_location + '/copy_geo.png'),
             '%s\t%s' % (_('Convert Any to Gerber'), ''))
-        self.menueditconvert_any2gerber.setToolTip(_("Convert the selected object into a Gerber object."))
-        self.menueditconvert_any2gerber.setStatusTip(_("Convert the selected object into a Gerber object."))
+        self.menueditconvert_any2gerber.setToolTip(
+            _("Convert the selected object(s) into a Gerber object, treating their shapes as "
+              "copper. Use this when you want to apply copper operations (isolation, NCC, "
+              "thieving) to geometry that started as something else.")
+        )
+        self.menueditconvert_any2gerber.setStatusTip(_("Convert the selection into a Gerber object."))
         self.menueditconvert_any2excellon = self.menuedit_convert.addAction(
             QtGui.QIcon(self.app.resource_location + '/copy_geo.png'),
             '%s\t%s' % (_('Convert Any to Excellon'), ''))
-        self.menueditconvert_any2excellon.setToolTip(_("Convert the selected object into an Excellon object."))
-        self.menueditconvert_any2excellon.setStatusTip(_("Convert the selected object into an Excellon object."))
+        self.menueditconvert_any2excellon.setToolTip(
+            _("Convert the selected object(s) into an Excellon object, treating round shapes "
+              "as drill holes. Use this when you want to drill features that came from a "
+              "Gerber or Geometry object.")
+        )
+        self.menueditconvert_any2excellon.setStatusTip(_("Convert the selection into an Excellon object."))
         self.menuedit_convert.setToolTipsVisible(True)
 
         # ############################ EDIT -> JOIN        ######################################################
@@ -499,24 +635,29 @@ class MainGUI(QtWidgets.QMainWindow):
             QtGui.QIcon(self.app.resource_location + '/join16.png'),
             '%s\t%s' % (_('Join Geo/Gerber/Exc -> Geo'), ''))
         self.menuedit_join2geo.setToolTip(
-            _("Merge a selection of objects, which can be of type:\n"
-              "- Gerber\n"
-              "- Excellon\n"
-              "- Geometry\n"
-              "into a new combo Geometry object.")
+            _("Merge several selected objects - Gerber, Excellon and/or Geometry - into a "
+              "single combined Geometry object. Select the objects you want to combine "
+              "first. Useful for milling everything together as one job.")
         )
+        self.menuedit_join2geo.setStatusTip(_("Merge the selection into a combined Geometry object."))
         self.menuedit_join_exc2exc = self.menuedit_join.addAction(
             QtGui.QIcon(self.app.resource_location + '/join16.png'),
             '%s\t%s' % (_('Join Excellon(s) -> Excellon'), ''))
         self.menuedit_join_exc2exc.setToolTip(
-            _("Merge a selection of Excellon objects into a new combo Excellon object.")
+            _("Merge several selected Excellon objects into one combined Excellon object. "
+              "Their drill tools are pooled together. Select two or more Excellon objects "
+              "first, then choose this item.")
         )
+        self.menuedit_join_exc2exc.setStatusTip(_("Merge selected Excellon objects into one."))
         self.menuedit_join_grb2grb = self.menuedit_join.addAction(
             QtGui.QIcon(self.app.resource_location + '/join16.png'),
             '%s\t%s' % (_('Join Gerber(s) -> Gerber'), ''))
         self.menuedit_join_grb2grb.setToolTip(
-            _("Merge a selection of Gerber objects into a new combo Gerber object.")
+            _("Merge several selected Gerber objects into one combined Gerber object. Select "
+              "two or more Gerber objects first, then choose this item - handy for treating "
+              "several copper layers as a single object.")
         )
+        self.menuedit_join_grb2grb.setStatusTip(_("Merge selected Gerber objects into one."))
         self.menuedit_join.setToolTipsVisible(True)
 
         # ############################ EDIT -> COPY        ######################################################
@@ -525,57 +666,93 @@ class MainGUI(QtWidgets.QMainWindow):
         self.menueditcopyobject = self.menuedit.addAction(
             QtGui.QIcon(self.app.resource_location + '/copy.png'),
             '%s\t%s' % (_('Copy'), _('Ctrl+C')))
-        self.menueditcopyobject.setToolTip(_("Make a copy of the selected object(s)."))
-        self.menueditcopyobject.setStatusTip(_("Make a copy of the selected object(s)."))
+        self.menueditcopyobject.setToolTip(
+            _("Make a duplicate of the selected object(s) (Ctrl+C). The copy is added to the "
+              "project with a new name and sits on top of the original. Useful before trying "
+              "a change you might want to undo.")
+        )
+        self.menueditcopyobject.setStatusTip(_("Duplicate the selected object(s)."))
 
         # Separator
         self.menuedit.addSeparator()
         self.menueditdelete = self.menuedit.addAction(
             QtGui.QIcon(self.app.resource_location + '/trash16.png'),
             '%s\t%s' % (_('Delete'), _('DEL')))
-        self.menueditdelete.setToolTip(_("Delete the selected object(s) from the project."))
-        self.menueditdelete.setStatusTip(_("Delete the selected object(s) from the project."))
+        self.menueditdelete.setToolTip(
+            _("Remove the selected object(s) from the project (Del). This cannot be undone, "
+              "so make sure the right objects are selected. The files on disk are not "
+              "affected - only the objects loaded in this project.")
+        )
+        self.menueditdelete.setStatusTip(_("Delete the selected object(s)."))
 
         # Separator
         self.menuedit.addSeparator()
         self.menuedit_numeric_move = self.menuedit.addAction(
             QtGui.QIcon(self.app.resource_location + '/move32_bis.png'),
             '%s\t%s' % (_('Num Move'), ''))
-        self.menuedit_numeric_move.setToolTip(_("Move the selected object(s) by typing exact X, Y offsets."))
-        self.menuedit_numeric_move.setStatusTip(_("Move the selected object(s) by typing exact X, Y offsets."))
+        self.menuedit_numeric_move.setToolTip(
+            _("Move the selected object(s) by an exact amount that you type in. Enter how far "
+              "to shift along X and Y instead of dragging. Use this when you need precise, "
+              "repeatable positioning.")
+        )
+        self.menuedit_numeric_move.setStatusTip(_("Move the selection by typed X, Y offsets."))
         self.menueditorigin = self.menuedit.addAction(
             QtGui.QIcon(self.app.resource_location + '/origin16.png'),
             '%s\t%s' % (_('Set Origin'), _('O')))
-        self.menueditorigin.setToolTip(_("Set the coordinate origin (0, 0) by clicking a point."))
-        self.menueditorigin.setStatusTip(_("Set the coordinate origin (0, 0) by clicking a point."))
+        self.menueditorigin.setToolTip(
+            _("Set where the (0, 0) point of the work is by clicking a spot on the canvas "
+              "(shortcut: O). Everything is measured from this origin, so it usually matches "
+              "your machine's zero. Press Esc to cancel the click.")
+        )
+        self.menueditorigin.setStatusTip(_("Set the origin by clicking a point."))
         self.menuedit_move2origin = self.menuedit.addAction(
             QtGui.QIcon(self.app.resource_location + '/move2origin32.png'),
             '%s\t%s' % (_('Move to Origin'), _('Shift+O')))
-        self.menuedit_move2origin.setToolTip(_("Move the selected object(s) so they sit at the origin (0, 0)."))
-        self.menuedit_move2origin.setStatusTip(_("Move the selected object(s) so they sit at the origin (0, 0)."))
+        self.menuedit_move2origin.setToolTip(
+            _("Shift the selected object(s) so their bottom-left corner sits exactly at the "
+              "origin (0, 0) (Shift+O). Handy for lining work up with the machine's zero "
+              "before generating G-Code.")
+        )
+        self.menuedit_move2origin.setStatusTip(_("Move the selection to the origin (0, 0)."))
         self.menuedit_center_in_origin = self.menuedit.addAction(
             QtGui.QIcon(self.app.resource_location + '/custom_origin32.png'),
             '%s\t%s' % (_('Custom Origin'), ''))
-        self.menuedit_center_in_origin.setToolTip(_("Set the origin to custom X, Y coordinates that you type in."))
-        self.menuedit_center_in_origin.setStatusTip(_("Set the origin to custom X, Y coordinates that you type in."))
+        self.menuedit_center_in_origin.setToolTip(
+            _("Move the selected object(s) to a custom origin point that you type in, instead "
+              "of clicking on the canvas. Use this when you know the exact coordinates where "
+              "the work should start.")
+        )
+        self.menuedit_center_in_origin.setStatusTip(_("Move the selection to a typed-in origin."))
 
         self.menueditjump = self.menuedit.addAction(
             QtGui.QIcon(self.app.resource_location + '/jump_to32.png'),
             '%s\t%s' % (_('Jump to Location'), _('J')))
-        self.menueditjump.setToolTip(_("Center the view on X, Y coordinates that you type in."))
-        self.menueditjump.setStatusTip(_("Center the view on X, Y coordinates that you type in."))
+        self.menueditjump.setToolTip(
+            _("Jump the view so it is centred on X, Y coordinates that you type in "
+              "(shortcut: J). The mouse cursor is also moved there. Handy for going straight "
+              "to a known point on a large board.")
+        )
+        self.menueditjump.setStatusTip(_("Center the view on typed-in coordinates."))
         self.menueditlocate = self.menuedit.addAction(
             QtGui.QIcon(self.app.resource_location + '/locate16.png'),
             '%s\t%s' % (_('Locate in Object'), _('Shift+J')))
-        self.menueditlocate.setToolTip(_("Jump the view to a reference point (corner or center) of the selected object."))
-        self.menueditlocate.setStatusTip(_("Jump the view to a reference point (corner or center) of the selected object."))
+        self.menueditlocate.setToolTip(
+            _("Jump the view to a chosen reference point of the selected object, such as a "
+              "corner or its centre (Shift+J). Useful for finding a known feature of an "
+              "object without hunting for it by eye.")
+        )
+        self.menueditlocate.setStatusTip(_("Jump to a reference point of the selected object."))
 
         # Separator
         self.menuedit.addSeparator()
         self.menueditselectall = self.menuedit.addAction(
             QtGui.QIcon(self.app.resource_location + '/select_all.png'),
             '%s\t%s' % (_('Select All'), _('Ctrl+A')))
-        self.menueditselectall.setToolTip(_("Select every object in the project."))
+        self.menueditselectall.setToolTip(
+            _("Select every object in the project at once (Ctrl+A). Handy before an action "
+              "you want to apply to everything, such as moving or deleting all objects "
+              "together.")
+        )
         self.menueditselectall.setStatusTip(_("Select every object in the project."))
 
         # Separator
@@ -583,8 +760,13 @@ class MainGUI(QtWidgets.QMainWindow):
         self.menueditpreferences = self.menuedit.addAction(
             QtGui.QIcon(self.app.resource_location + '/pref.png'),
             '%s\t%s' % (_('Preferences'), _('Shift+P')))
-        self.menueditpreferences.setToolTip(_("Open the Preferences window to configure FlatCAM."))
-        self.menueditpreferences.setStatusTip(_("Open the Preferences window to configure FlatCAM."))
+        self.menueditpreferences.setToolTip(
+            _("Open the Preferences, where you can change how the application behaves "
+              "(shortcut: Shift+P). Settings here include units, colours, file export "
+              "formats and defaults for every tool. Remember to save them if you want them "
+              "kept.")
+        )
+        self.menueditpreferences.setStatusTip(_("Open the Preferences."))
 
         # #############################################################################################################
         # ########################################### OPTIONS # ######################################################
@@ -595,47 +777,75 @@ class MainGUI(QtWidgets.QMainWindow):
         self.menuoptions_transform_rotate = self.menuoptions.addAction(
             QtGui.QIcon(self.app.resource_location + '/rotate.png'),
             '%s\t%s' % (_("Rotate Selection"), _('Shift+(R)')))
-        self.menuoptions_transform_rotate.setToolTip(_("Rotate the selected object(s) by an angle you type in."))
-        self.menuoptions_transform_rotate.setStatusTip(_("Rotate the selected object(s) by an angle you type in."))
+        self.menuoptions_transform_rotate.setToolTip(
+            _("Turn the selected object(s) by an angle you type in (Shift+R). Positive angles "
+              "rotate counter-clockwise around the selection's centre. Use this to "
+              "re-orient a board or part before machining.")
+        )
+        self.menuoptions_transform_rotate.setStatusTip(_("Rotate the selection by a typed angle."))
         # Separator
         self.menuoptions.addSeparator()
 
         self.menuoptions_transform_skewx = self.menuoptions.addAction(
             QtGui.QIcon(self.app.resource_location + '/skewX.png'),
             '%s\t%s' % (_("Skew on X axis"), _('Shift+X')))
-        self.menuoptions_transform_skewx.setToolTip(_("Skew (shear) the selected object(s) along the X axis."))
-        self.menuoptions_transform_skewx.setStatusTip(_("Skew (shear) the selected object(s) along the X axis."))
+        self.menuoptions_transform_skewx.setToolTip(
+            _("Slant (shear) the selected object(s) sideways along the X axis by an angle you "
+              "type in (Shift+X). This leans the shapes left or right. Mostly used to "
+              "correct or deliberately distort artwork.")
+        )
+        self.menuoptions_transform_skewx.setStatusTip(_("Skew the selection along the X axis."))
         self.menuoptions_transform_skewy = self.menuoptions.addAction(
             QtGui.QIcon(self.app.resource_location + '/skewY.png'),
             '%s\t%s' % (_("Skew on Y axis"), _('Shift+Y')))
-        self.menuoptions_transform_skewy.setToolTip(_("Skew (shear) the selected object(s) along the Y axis."))
-        self.menuoptions_transform_skewy.setStatusTip(_("Skew (shear) the selected object(s) along the Y axis."))
+        self.menuoptions_transform_skewy.setToolTip(
+            _("Slant (shear) the selected object(s) up or down along the Y axis by an angle "
+              "you type in (Shift+Y). This leans the shapes vertically. Mostly used to "
+              "correct or deliberately distort artwork.")
+        )
+        self.menuoptions_transform_skewy.setStatusTip(_("Skew the selection along the Y axis."))
 
         # Separator
         self.menuoptions.addSeparator()
         self.menuoptions_transform_flipx = self.menuoptions.addAction(
             QtGui.QIcon(self.app.resource_location + '/flipx.png'),
             '%s\t%s' % (_("Flip on X axis"), _('X')))
-        self.menuoptions_transform_flipx.setToolTip(_("Mirror the selected object(s) across the X axis."))
-        self.menuoptions_transform_flipx.setStatusTip(_("Mirror the selected object(s) across the X axis."))
+        self.menuoptions_transform_flipx.setToolTip(
+            _("Mirror (flip) the selected object(s) top-to-bottom across the X axis "
+              "(shortcut: X). Commonly used to create the bottom side of a two-sided board "
+              "from the top side.")
+        )
+        self.menuoptions_transform_flipx.setStatusTip(_("Mirror the selection across the X axis."))
         self.menuoptions_transform_flipy = self.menuoptions.addAction(
             QtGui.QIcon(self.app.resource_location + '/flipy.png'),
             '%s\t%s' % (_("Flip on Y axis"), _('Y')))
-        self.menuoptions_transform_flipy.setToolTip(_("Mirror the selected object(s) across the Y axis."))
-        self.menuoptions_transform_flipy.setStatusTip(_("Mirror the selected object(s) across the Y axis."))
+        self.menuoptions_transform_flipy.setToolTip(
+            _("Mirror (flip) the selected object(s) left-to-right across the Y axis "
+              "(shortcut: Y). Commonly used to create the bottom side of a two-sided board "
+              "from the top side.")
+        )
+        self.menuoptions_transform_flipy.setStatusTip(_("Mirror the selection across the Y axis."))
         # Separator
         self.menuoptions.addSeparator()
 
         self.menuoptions_view_source = self.menuoptions.addAction(
             QtGui.QIcon(self.app.resource_location + '/source32.png'),
             '%s\t%s' % (_("View source"), _('Alt+S')))
-        self.menuoptions_view_source.setToolTip(_("Show the raw source code (Gerber/Excellon/G-Code) of the selected object."))
-        self.menuoptions_view_source.setStatusTip(_("Show the raw source code (Gerber/Excellon/G-Code) of the selected object."))
+        self.menuoptions_view_source.setToolTip(
+            _("Show the raw text source of the selected object - the actual Gerber, Excellon "
+              "or G-Code (Alt+S). Opens in a read-only viewer, handy for checking exactly "
+              "what was loaded or will be produced.")
+        )
+        self.menuoptions_view_source.setStatusTip(_("View the source code of the selected object."))
         self.menuoptions_tools_db = self.menuoptions.addAction(
             QtGui.QIcon(self.app.resource_location + '/database32.png'),
             '%s\t%s' % (_("Tools Database"), _('Ctrl+D')))
-        self.menuoptions_tools_db.setToolTip(_("Open the Tools Database to manage saved tool definitions."))
-        self.menuoptions_tools_db.setStatusTip(_("Open the Tools Database to manage saved tool definitions."))
+        self.menuoptions_tools_db.setToolTip(
+            _("Open the Tools Database, where you store reusable tool definitions - diameters, "
+              "feedrates, depths and more (Ctrl+D). Add your real cutting tools here once, "
+              "then load them into any job instead of retyping the numbers.")
+        )
+        self.menuoptions_tools_db.setStatusTip(_("Open the Tools Database."))
         # Separator
         self.menuoptions.addSeparator()
 
@@ -647,8 +857,11 @@ class MainGUI(QtWidgets.QMainWindow):
         self.menuoptions_experimental_3D_area = self.menuoptions_experimental.addAction(
             QtGui.QIcon(self.app.resource_location + '/3D_area32.png'),
             '%s\t%s' % (_('3D Area'), ''))
-        self.menuoptions_experimental_3D_area.setToolTip(_("Experimental: define a 3D area for processing."))
-        self.menuoptions_experimental_3D_area.setStatusTip(_("Experimental: define a 3D area for processing."))
+        self.menuoptions_experimental_3D_area.setToolTip(
+            _("Experimental feature for defining a 3D working area. This is unfinished and "
+              "may not behave reliably, so use it only for testing.")
+        )
+        self.menuoptions_experimental_3D_area.setStatusTip(_("Experimental: define a 3D area."))
         # Separator
         self.menuoptions.addSeparator()
 
@@ -660,106 +873,169 @@ class MainGUI(QtWidgets.QMainWindow):
         self.menuviewenable = self.menuview.addAction(
             QtGui.QIcon(self.app.resource_location + '/replot16.png'),
             '%s\t%s' % (_('Enable all'), _('Alt+1')))
-        self.menuviewenable.setToolTip(_("Make every object in the project visible on the plot."))
-        self.menuviewenable.setStatusTip(_("Make every object in the project visible on the plot."))
+        self.menuviewenable.setToolTip(
+            _("Turn on the plot for every object in the project so they all show on the "
+              "canvas (Alt+1). Use this to bring back objects you previously hid.")
+        )
+        self.menuviewenable.setStatusTip(_("Show all objects on the plot."))
         self.menuviewdisableall = self.menuview.addAction(
             QtGui.QIcon(self.app.resource_location + '/clear_plot16.png'),
             '%s\t%s' % (_('Disable all'), _('Alt+2')))
-        self.menuviewdisableall.setToolTip(_("Hide every object in the project from the plot."))
-        self.menuviewdisableall.setStatusTip(_("Hide every object in the project from the plot."))
+        self.menuviewdisableall.setToolTip(
+            _("Hide every object in the project from the canvas (Alt+2). The objects stay in "
+              "the project - this only clears the view, which can help when the plot is "
+              "cluttered.")
+        )
+        self.menuviewdisableall.setStatusTip(_("Hide all objects from the plot."))
         self.menuviewenableother = self.menuview.addAction(
             QtGui.QIcon(self.app.resource_location + '/replot16.png'),
             '%s\t%s' % (_('Enable non-selected'), _('Alt+3')))
-        self.menuviewenableother.setToolTip(_("Make all objects except the selected ones visible."))
-        self.menuviewenableother.setStatusTip(_("Make all objects except the selected ones visible."))
+        self.menuviewenableother.setToolTip(
+            _("Show every object except the ones you have selected (Alt+3). Useful for "
+              "revealing the surrounding objects while keeping your current selection hidden.")
+        )
+        self.menuviewenableother.setStatusTip(_("Show all non-selected objects."))
         self.menuviewdisableother = self.menuview.addAction(
             QtGui.QIcon(self.app.resource_location + '/clear_plot16.png'),
             '%s\t%s' % (_('Disable non-selected'), _('Alt+4')))
-        self.menuviewdisableother.setToolTip(_("Hide all objects except the selected ones."))
-        self.menuviewdisableother.setStatusTip(_("Hide all objects except the selected ones."))
+        self.menuviewdisableother.setToolTip(
+            _("Hide every object except the ones you have selected (Alt+4). A quick way to "
+              "focus the view on just the objects you are working on.")
+        )
+        self.menuviewdisableother.setStatusTip(_("Hide all non-selected objects."))
 
         # Separator
         self.menuview.addSeparator()
         self.menuview_zoom_fit = self.menuview.addAction(
             QtGui.QIcon(self.app.resource_location + '/zoom_fit32.png'),
             '%s\t%s' % (_("Zoom Fit"), _('V')))
-        self.menuview_zoom_fit.setToolTip(_("Zoom so all visible objects fit in the Plot Area."))
-        self.menuview_zoom_fit.setStatusTip(_("Zoom so all visible objects fit in the Plot Area."))
+        self.menuview_zoom_fit.setToolTip(
+            _("Zoom and centre the view so all visible objects fit neatly on screen "
+              "(shortcut: V). The fastest way to get your bearings after panning or zooming "
+              "too far.")
+        )
+        self.menuview_zoom_fit.setStatusTip(_("Zoom to fit all visible objects."))
         self.menuview_zoom_in = self.menuview.addAction(
             QtGui.QIcon(self.app.resource_location + '/zoom_in32.png'),
             '%s\t%s' % (_("Zoom In"), _('=')))
-        self.menuview_zoom_in.setToolTip(_("Zoom in to see more detail."))
-        self.menuview_zoom_in.setStatusTip(_("Zoom in to see more detail."))
+        self.menuview_zoom_in.setToolTip(
+            _("Zoom the view in to see finer detail (shortcut: =). You can also scroll the "
+              "mouse wheel over the canvas to zoom toward the cursor.")
+        )
+        self.menuview_zoom_in.setStatusTip(_("Zoom in."))
         self.menuview_zoom_out = self.menuview.addAction(
             QtGui.QIcon(self.app.resource_location + '/zoom_out32.png'),
             '%s\t%s' % (_("Zoom Out"), _('-')))
-        self.menuview_zoom_out.setToolTip(_("Zoom out to see more of the drawing."))
-        self.menuview_zoom_out.setStatusTip(_("Zoom out to see more of the drawing."))
+        self.menuview_zoom_out.setToolTip(
+            _("Zoom the view out to see more of the drawing at once (shortcut: -). You can "
+              "also scroll the mouse wheel over the canvas to zoom.")
+        )
+        self.menuview_zoom_out.setStatusTip(_("Zoom out."))
         self.menuview.addSeparator()
 
         # Replot all
         self.menuview_replot = self.menuview.addAction(
             QtGui.QIcon(self.app.resource_location + '/replot32.png'),
             '%s\t%s' % (_("Redraw All"), _('F5')))
-        self.menuview_replot.setToolTip(_("Redraw every object on the plot."))
-        self.menuview_replot.setStatusTip(_("Redraw every object on the plot."))
+        self.menuview_replot.setToolTip(
+            _("Redraw every object on the canvas from scratch (F5). Use this if the display "
+              "looks wrong or out of date, for example after an operation that did not "
+              "refresh the view.")
+        )
+        self.menuview_replot.setStatusTip(_("Redraw all objects."))
         self.menuview.addSeparator()
 
         self.menuview_toggle_code_editor = self.menuview.addAction(
             QtGui.QIcon(self.app.resource_location + '/code_editor32.png'),
             '%s\t%s' % (_('Toggle Code Editor'), _('Shift+E')))
-        self.menuview_toggle_code_editor.setToolTip(_("Show or hide the built-in code editor."))
-        self.menuview_toggle_code_editor.setStatusTip(_("Show or hide the built-in code editor."))
+        self.menuview_toggle_code_editor.setToolTip(
+            _("Open or close the built-in code editor tab (Shift+E). Use it to view or edit "
+              "text such as G-Code or scripts directly inside the application.")
+        )
+        self.menuview_toggle_code_editor.setStatusTip(_("Show or hide the code editor."))
         self.menuview.addSeparator()
         self.menuview_toggle_fscreen = self.menuview.addAction(
             QtGui.QIcon(self.app.resource_location + '/fscreen32.png'),
             '%s\t%s' % (_("Toggle FullScreen"), _('Alt+F10')))
-        self.menuview_toggle_fscreen.setToolTip(_("Switch the application in and out of full screen."))
-        self.menuview_toggle_fscreen.setStatusTip(_("Switch the application in and out of full screen."))
+        self.menuview_toggle_fscreen.setToolTip(
+            _("Switch the application in and out of full-screen mode (Alt+F10). Full screen "
+              "hides the window borders to give you the largest possible drawing area; press "
+              "Esc or the shortcut again to return.")
+        )
+        self.menuview_toggle_fscreen.setStatusTip(_("Toggle full-screen mode."))
         self.menuview_toggle_parea = self.menuview.addAction(
             QtGui.QIcon(self.app.resource_location + '/plot32.png'),
             '%s\t%s' % (_("Toggle Plot Area"), _('Ctrl+F10')))
-        self.menuview_toggle_parea.setToolTip(_("Show or hide the Plot Area."))
+        self.menuview_toggle_parea.setToolTip(
+            _("Show or hide the Plot Area, the main drawing canvas (Ctrl+F10). Hiding it can "
+              "make room for other tabs such as the editor or Preferences.")
+        )
         self.menuview_toggle_parea.setStatusTip(_("Show or hide the Plot Area."))
         self.menuview_toggle_notebook = self.menuview.addAction(
             QtGui.QIcon(self.app.resource_location + '/notebook32.png'),
             '%s\t%s' % (_("Toggle Project/Properties/Tool"), _('`')))
-        self.menuview_toggle_notebook.setToolTip(_("Show or hide the left panel (Project, Properties and Tool tabs)."))
-        self.menuview_toggle_notebook.setStatusTip(_("Show or hide the left panel (Project, Properties and Tool tabs)."))
+        self.menuview_toggle_notebook.setToolTip(
+            _("Show or hide the left-hand panel that holds the Project, Properties and Tool "
+              "tabs (shortcut: ` , the backtick key). Hide it to free up space for the "
+              "drawing area.")
+        )
+        self.menuview_toggle_notebook.setStatusTip(_("Show or hide the left panel."))
 
         self.menuview.addSeparator()
         self.menuview_toggle_grid = self.menuview.addAction(
             QtGui.QIcon(self.app.resource_location + '/grid32.png'),
             '%s\t%s' % (_("Toggle Grid Snap"), _('G')))
-        self.menuview_toggle_grid.setToolTip(_("Turn snapping to the grid on or off."))
-        self.menuview_toggle_grid.setStatusTip(_("Turn snapping to the grid on or off."))
+        self.menuview_toggle_grid.setToolTip(
+            _("Turn grid snapping on or off (shortcut: G). When on, the cursor jumps to grid "
+              "points so you can place and draw things at exact, regular spacings. Set the "
+              "grid size in the status bar at the bottom.")
+        )
+        self.menuview_toggle_grid.setStatusTip(_("Toggle snapping to the grid."))
         self.menuview_toggle_grid_lines = self.menuview.addAction(
             QtGui.QIcon(self.app.resource_location + '/grid_lines32.png'),
             '%s\t%s' % (_("Toggle Grid Lines"), _('Shift+G')))
-        self.menuview_toggle_grid_lines.setToolTip(_("Show or hide the grid lines on the Plot Area."))
-        self.menuview_toggle_grid_lines.setStatusTip(_("Show or hide the grid lines on the Plot Area."))
+        self.menuview_toggle_grid_lines.setToolTip(
+            _("Show or hide the visible grid lines on the canvas (Shift+G). This only changes "
+              "whether the lines are drawn; it does not turn snapping on or off.")
+        )
+        self.menuview_toggle_grid_lines.setStatusTip(_("Show or hide the grid lines."))
         self.menuview_toggle_axis = self.menuview.addAction(
             QtGui.QIcon(self.app.resource_location + '/axis32.png'),
             '%s\t%s' % (_("Toggle Axis"), _('Shift+A')))
-        self.menuview_toggle_axis.setToolTip(_("Show or hide the X/Y axis lines."))
+        self.menuview_toggle_axis.setToolTip(
+            _("Show or hide the X and Y axis lines that cross at the origin (Shift+A). They "
+              "help you see where (0, 0) is and which way the axes point.")
+        )
         self.menuview_toggle_axis.setStatusTip(_("Show or hide the X/Y axis lines."))
         self.menuview_toggle_workspace = self.menuview.addAction(
             QtGui.QIcon(self.app.resource_location + '/workspace24.png'),
             '%s\t%s' % (_("Toggle Workspace"), _('Shift+W')))
-        self.menuview_toggle_workspace.setToolTip(_("Show or hide the workspace outline (the chosen sheet size)."))
-        self.menuview_toggle_workspace.setStatusTip(_("Show or hide the workspace outline (the chosen sheet size)."))
+        self.menuview_toggle_workspace.setToolTip(
+            _("Show or hide the workspace rectangle, which marks the limits of your working "
+              "area or material sheet (Shift+W). The size (for example A4) is set in "
+              "Preferences and shown in the status bar.")
+        )
+        self.menuview_toggle_workspace.setStatusTip(_("Show or hide the workspace outline."))
         self.menuview_toggle_hud = self.menuview.addAction(
             QtGui.QIcon(self.app.resource_location + '/hud_32.png'),
             '%s\t%s' % (_("Toggle HUD"), _('Shift+H')))
-        self.menuview_toggle_hud.setToolTip(_("Show or hide the on-screen heads-up display of coordinates."))
-        self.menuview_toggle_hud.setStatusTip(_("Show or hide the on-screen heads-up display of coordinates."))
+        self.menuview_toggle_hud.setToolTip(
+            _("Show or hide the heads-up display (HUD) overlaid on the canvas (Shift+H). It "
+              "shows live information such as the cursor position, units and grid as you "
+              "move the mouse.")
+        )
+        self.menuview_toggle_hud.setStatusTip(_("Show or hide the heads-up display."))
 
         self.menuview.addSeparator()
         self.menuview_show_log = self.menuview.addAction(
             QtGui.QIcon(self.app.resource_location + '/log32.png'),
             '%s\t%s' % (_("Error Log"), ''))
-        self.menuview_show_log.setToolTip(_("Open the application error log."))
-        self.menuview_show_log.setStatusTip(_("Open the application error log."))
+        self.menuview_show_log.setToolTip(
+            _("Open the error log, a record of warnings and errors the application has "
+              "produced. Useful when something went wrong and you want to see the details or "
+              "report a bug.")
+        )
+        self.menuview_show_log.setStatusTip(_("Open the error log."))
 
         # ########################################################################
         # ########################## Objects # ###################################
@@ -770,12 +1046,18 @@ class MainGUI(QtWidgets.QMainWindow):
         self.menuobjects_selall = self.menuobjects.addAction(
             QtGui.QIcon(self.app.resource_location + '/select_all.png'),
             '%s\t%s' % (_('Select All'), ''))
-        self.menuobjects_selall.setToolTip(_("Select every object in the project tree."))
+        self.menuobjects_selall.setToolTip(
+            _("Select every object listed in the Project tree at once. Handy before an action "
+              "you want applied to all objects together.")
+        )
         self.menuobjects_selall.setStatusTip(_("Select every object in the project tree."))
         self.menuobjects_unselall = self.menuobjects.addAction(
             QtGui.QIcon(self.app.resource_location + '/deselect_all32.png'),
             '%s\t%s' % (_('Deselect All'), ''))
-        self.menuobjects_unselall.setToolTip(_("Clear the current object selection."))
+        self.menuobjects_unselall.setToolTip(
+            _("Clear the current selection so that no objects are selected. Use this to start "
+              "fresh or to make sure an action does not affect anything unintentionally.")
+        )
         self.menuobjects_unselall.setStatusTip(_("Clear the current object selection."))
 
         # ########################################################################
@@ -789,8 +1071,13 @@ class MainGUI(QtWidgets.QMainWindow):
         self.menu_plugins_shell = self.menu_plugins.addAction(
             QtGui.QIcon(self.app.resource_location + '/shell16.png'),
             '%s\t%s' % (_('Command Line'), _('S')))
-        self.menu_plugins_shell.setToolTip(_("Open the Tcl command line shell for scripting FlatCAM."))
-        self.menu_plugins_shell.setStatusTip(_("Open the Tcl command line shell for scripting FlatCAM."))
+        self.menu_plugins_shell.setToolTip(
+            _("Open the Tcl command-line shell (shortcut: S). Here you can type commands to "
+              "control the application directly - load files, run tools and generate G-Code "
+              "- which is handy for automating repetitive jobs. Script output also appears "
+              "here.")
+        )
+        self.menu_plugins_shell.setStatusTip(_("Open the Tcl command line shell."))
 
         # ########################################################################
         # ########################## Help # ######################################
@@ -800,69 +1087,108 @@ class MainGUI(QtWidgets.QMainWindow):
         self.menuhelp_manual = self.menuhelp.addAction(
             QtGui.QIcon(self.app.resource_location + '/globe16.png'),
             '%s\t%s' % (_('Obsolete Online Help'), _('F1')))
-        self.menuhelp_manual.setToolTip(_("Open the (obsolete) online help in a web browser."))
-        self.menuhelp_manual.setStatusTip(_("Open the (obsolete) online help in a web browser."))
+        self.menuhelp_manual.setToolTip(
+            _("Open the online help manual in your web browser (F1). Note this manual is "
+              "older and may not match the current version, but it can still be a useful "
+              "reference.")
+        )
+        self.menuhelp_manual.setStatusTip(_("Open the online help in a web browser."))
 
         self.menuhelp_bookmarks = self.menuhelp.addMenu(
             QtGui.QIcon(self.app.resource_location + '/bookmarks16.png'), _('Bookmarks'))
         self.menuhelp_bookmarks.setToolTipsVisible(True)
+        self.menuhelp_bookmarks.setToolTip(
+            _("Your saved web links. Click a bookmark to open it in your browser, or use the "
+              "Bookmarks Manager below to add and organise them.")
+        )
         self.menuhelp_bookmarks.addSeparator()
         self.menuhelp_bookmarks_manager = self.menuhelp_bookmarks.addAction(
             QtGui.QIcon(self.app.resource_location + '/bookmarks16.png'),
             '%s\t%s' % (_('Bookmarks Manager'), ''))
-        self.menuhelp_bookmarks_manager.setToolTip(_("Manage your saved web bookmarks shown in this menu."))
-        self.menuhelp_bookmarks_manager.setStatusTip(_("Manage your saved web bookmarks shown in this menu."))
+        self.menuhelp_bookmarks_manager.setToolTip(
+            _("Open the Bookmarks Manager to add, edit or remove your saved web links. The "
+              "bookmarks you keep here also appear in this Bookmarks menu for quick one-click "
+              "access.")
+        )
+        self.menuhelp_bookmarks_manager.setStatusTip(_("Manage your saved web bookmarks."))
 
         self.menuhelp.addSeparator()
         self.menuhelp_report_bug = self.menuhelp.addAction(
             QtGui.QIcon(self.app.resource_location + '/bug16.png'),
             '%s\t%s' % (_('Report a bug'), ''))
-        self.menuhelp_report_bug.setToolTip(_("Open the bug report page in a web browser."))
-        self.menuhelp_report_bug.setStatusTip(_("Open the bug report page in a web browser."))
+        self.menuhelp_report_bug.setToolTip(
+            _("Open the bug report page in your web browser so you can tell the developers "
+              "about a problem. Including the steps to reproduce it and anything from the "
+              "error log makes the report much more useful.")
+        )
+        self.menuhelp_report_bug.setStatusTip(_("Open the bug report page."))
         self.menuhelp.addSeparator()
         self.menuhelp_exc_spec = self.menuhelp.addAction(
             QtGui.QIcon(self.app.resource_location + '/pdf_link16.png'),
             '%s\t%s' % (_('Excellon Specification'), ''))
-        self.menuhelp_exc_spec.setToolTip(_("Open the Excellon file format specification (PDF)."))
-        self.menuhelp_exc_spec.setStatusTip(_("Open the Excellon file format specification (PDF)."))
+        self.menuhelp_exc_spec.setToolTip(
+            _("Open the Excellon drill-file format specification (a PDF) in your browser. A "
+              "technical reference for how Excellon files are structured, useful if you need "
+              "to troubleshoot a drill file.")
+        )
+        self.menuhelp_exc_spec.setStatusTip(_("Open the Excellon format specification (PDF)."))
         self.menuhelp_gerber_spec = self.menuhelp.addAction(
             QtGui.QIcon(self.app.resource_location + '/pdf_link16.png'),
             '%s\t%s' % (_('Gerber Specification'), ''))
-        self.menuhelp_gerber_spec.setToolTip(_("Open the Gerber file format specification (PDF)."))
-        self.menuhelp_gerber_spec.setStatusTip(_("Open the Gerber file format specification (PDF)."))
+        self.menuhelp_gerber_spec.setToolTip(
+            _("Open the Gerber file-format specification (a PDF) in your browser. A technical "
+              "reference for how Gerber files are structured, useful if you need to "
+              "troubleshoot a copper layer.")
+        )
+        self.menuhelp_gerber_spec.setStatusTip(_("Open the Gerber format specification (PDF)."))
 
         self.menuhelp.addSeparator()
 
         self.menuhelp_shortcut_list = self.menuhelp.addAction(
             QtGui.QIcon(self.app.resource_location + '/shortcuts24.png'),
             '%s\t%s' % (_('Shortcuts List'), _('F3')))
-        self.menuhelp_shortcut_list.setToolTip(_("Show the list of all keyboard shortcuts."))
-        self.menuhelp_shortcut_list.setStatusTip(_("Show the list of all keyboard shortcuts."))
+        self.menuhelp_shortcut_list.setToolTip(
+            _("Open a tab that lists every keyboard shortcut (F3). A handy cheat sheet for "
+              "learning the quick keys that speed up your work.")
+        )
+        self.menuhelp_shortcut_list.setStatusTip(_("Show the list of keyboard shortcuts."))
         self.menuhelp_videohelp = self.menuhelp.addAction(
             QtGui.QIcon(self.app.resource_location + '/youtube32.png'),
             '%s\t%s' % (_('YouTube Channel'), _('F4')))
-        self.menuhelp_videohelp.setToolTip(_("Open the FlatCAM YouTube channel with video tutorials."))
-        self.menuhelp_videohelp.setStatusTip(_("Open the FlatCAM YouTube channel with video tutorials."))
+        self.menuhelp_videohelp.setToolTip(
+            _("Open the project's YouTube channel in your browser (F4). A good place to find "
+              "video tutorials and demonstrations if you prefer learning by watching.")
+        )
+        self.menuhelp_videohelp.setStatusTip(_("Open the YouTube channel with video tutorials."))
 
         self.menuhelp.addSeparator()
 
         self.menuhelp_donate = self.menuhelp.addAction(
             QtGui.QIcon(self.app.resource_location + '/paypal32.png'),
             '%s\t%s' % (_('Donate'), ''))
-        self.menuhelp_donate.setToolTip(_("Support the project with a donation."))
+        self.menuhelp_donate.setToolTip(
+            _("Open the donation page in your browser. If the program is useful to you, a "
+              "donation helps support its continued development. Entirely optional.")
+        )
         self.menuhelp_donate.setStatusTip(_("Support the project with a donation."))
 
         self.menuhelp_readme = self.menuhelp.addAction(
             QtGui.QIcon(self.app.resource_location + '/warning.png'),
             '%s\t%s' % (_("How To"), ''))
-        self.menuhelp_readme.setToolTip(_("Show basic instructions on how to use FlatCAM."))
-        self.menuhelp_readme.setStatusTip(_("Show basic instructions on how to use FlatCAM."))
+        self.menuhelp_readme.setToolTip(
+            _("Show a short How-To with the basic steps for getting started. A good first "
+              "stop if you are new and want a quick overview of the typical workflow.")
+        )
+        self.menuhelp_readme.setStatusTip(_("Show basic how-to instructions."))
 
         self.menuhelp_about = self.menuhelp.addAction(
             QtGui.QIcon(self.app.resource_location + '/about32.png'),
             '%s\t%s' % (_('About'), ''))
-        self.menuhelp_about.setToolTip(_("Show version and license information about FlatCAM."))
-        self.menuhelp_about.setStatusTip(_("Show version and license information about FlatCAM."))
+        self.menuhelp_about.setToolTip(
+            _("Show the About dialog with the version number, credits and licence "
+              "information. Check the version here when reporting a problem.")
+        )
+        self.menuhelp_about.setStatusTip(_("Show version and licence information."))
 
         # ########################################################################
         # ########################## GEOMETRY EDITOR # ###########################
@@ -875,116 +1201,183 @@ class MainGUI(QtWidgets.QMainWindow):
             QtGui.QIcon(self.app.resource_location + '/circle32.png'),
             '%s\t%s' % (_('Circle'), _('O'))
         )
-        self.geo_add_circle_menuitem.setToolTip(_("Draw a circle shape."))
-        self.geo_add_circle_menuitem.setStatusTip(_("Draw a circle shape."))
+        self.geo_add_circle_menuitem.setToolTip(
+            _("Draw a circle (shortcut: O). Click once for the centre, then move out and "
+              "click again to set the radius. The new circle is added to the geometry you "
+              "are editing.")
+        )
+        self.geo_add_circle_menuitem.setStatusTip(_("Draw a circle."))
         self.geo_add_arc_menuitem = self.geo_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/arc16.png'),
             '%s\t%s' % (_('Arc'), _('A')))
-        self.geo_add_arc_menuitem.setToolTip(_("Draw an arc shape."))
-        self.geo_add_arc_menuitem.setStatusTip(_("Draw an arc shape."))
+        self.geo_add_arc_menuitem.setToolTip(
+            _("Draw an arc, a curved segment of a circle (shortcut: A). Click to place the "
+              "points that define the arc. Useful for rounded corners and curved paths.")
+        )
+        self.geo_add_arc_menuitem.setStatusTip(_("Draw an arc."))
         self.geo_editor_menu.addSeparator()
         self.geo_add_rectangle_menuitem = self.geo_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/rectangle32.png'),
             '%s\t%s' % (_('Rectangle'), _('R'))
         )
-        self.geo_add_rectangle_menuitem.setToolTip(_("Draw a rectangle shape."))
-        self.geo_add_rectangle_menuitem.setStatusTip(_("Draw a rectangle shape."))
+        self.geo_add_rectangle_menuitem.setToolTip(
+            _("Draw a rectangle (shortcut: R). Click one corner, then click the opposite "
+              "corner to set its size. Useful for board outlines and pockets.")
+        )
+        self.geo_add_rectangle_menuitem.setStatusTip(_("Draw a rectangle."))
         self.geo_add_polygon_menuitem = self.geo_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/polygon32.png'),
             '%s\t%s' % (_('Polygon'), _('N'))
         )
-        self.geo_add_polygon_menuitem.setToolTip(_("Draw a polygon by clicking its corners."))
-        self.geo_add_polygon_menuitem.setStatusTip(_("Draw a polygon by clicking its corners."))
+        self.geo_add_polygon_menuitem.setToolTip(
+            _("Draw a closed polygon (shortcut: N). Click each corner in turn; press Enter to "
+              "finish and close the shape, or Esc to cancel. Use this for free-form filled "
+              "areas.")
+        )
+        self.geo_add_polygon_menuitem.setStatusTip(_("Draw a polygon."))
         self.geo_add_path_menuitem = self.geo_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/path32.png'),
             '%s\t%s' % (_('Path'), _('P')))
-        self.geo_add_path_menuitem.setToolTip(_("Draw an open path (a line made of segments)."))
-        self.geo_add_path_menuitem.setStatusTip(_("Draw an open path (a line made of segments)."))
+        self.geo_add_path_menuitem.setToolTip(
+            _("Draw an open path - a line made of one or more straight segments (shortcut: P). "
+              "Click each point in turn; press Enter to finish or Esc to cancel. Unlike a "
+              "polygon, the ends are not joined.")
+        )
+        self.geo_add_path_menuitem.setStatusTip(_("Draw an open path."))
         self.geo_editor_menu.addSeparator()
         self.geo_add_text_menuitem = self.geo_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/text32.png'),
             '%s\t%s' % (_('Text'), _('T')))
-        self.geo_add_text_menuitem.setToolTip(_("Add a text shape."))
+        self.geo_add_text_menuitem.setToolTip(
+            _("Add text as a shape (shortcut: T). Type your text, choose a font, then click "
+              "to place it. The letters become geometry you can mill - handy for labels or "
+              "part numbers.")
+        )
         self.geo_add_text_menuitem.setStatusTip(_("Add a text shape."))
         self.geo_editor_menu.addSeparator()
         self.geo_union_menuitem = self.geo_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/union16.png'),
             '%s\t%s' % (_('Union'), _('U')))
-        self.geo_union_menuitem.setToolTip(_("Merge the selected shapes into one."))
+        self.geo_union_menuitem.setToolTip(
+            _("Combine the selected shapes into a single shape (shortcut: U). Overlapping "
+              "areas are merged together. Select two or more shapes first.")
+        )
         self.geo_union_menuitem.setStatusTip(_("Merge the selected shapes into one."))
         self.geo_intersection_menuitem = self.geo_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/intersection16.png'),
             '%s\t%s' % (_('Intersection'), _('E')))
-        self.geo_intersection_menuitem.setToolTip(_("Keep only the area where the selected shapes overlap."))
-        self.geo_intersection_menuitem.setStatusTip(_("Keep only the area where the selected shapes overlap."))
+        self.geo_intersection_menuitem.setToolTip(
+            _("Keep only the area where the selected shapes overlap and discard the rest "
+              "(shortcut: E). Select two or more overlapping shapes first.")
+        )
+        self.geo_intersection_menuitem.setStatusTip(_("Keep only the overlapping area."))
         self.geo_subtract_menuitem = self.geo_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/subtract16.png'),
             '%s\t%s' % (_('Subtraction'), _('S'))
         )
-        self.geo_subtract_menuitem.setToolTip(_("Subtract the other shapes from the first selected shape."))
-        self.geo_subtract_menuitem.setStatusTip(_("Subtract the other shapes from the first selected shape."))
+        self.geo_subtract_menuitem.setToolTip(
+            _("Cut the other selected shapes out of the first one you selected (shortcut: S). "
+              "The first shape is the target and is replaced by the result. Select the "
+              "target first, then the shapes to remove.")
+        )
+        self.geo_subtract_menuitem.setStatusTip(_("Subtract the other shapes from the first."))
         self.geo_subtract_alt_menuitem = self.geo_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/subtract16.png'),
             '%s\t%s' % (_('Alt Subtraction'), '')
         )
-        self.geo_subtract_alt_menuitem.setToolTip(_("Subtract the first selected shape from the other shapes."))
-        self.geo_subtract_alt_menuitem.setStatusTip(_("Subtract the first selected shape from the other shapes."))
+        self.geo_subtract_alt_menuitem.setToolTip(
+            _("Cut the first selected shape out of all the other selected shapes. The first "
+              "shape acts as the cutter and is kept; the others are trimmed by it. The "
+              "opposite direction to ordinary Subtraction.")
+        )
+        self.geo_subtract_alt_menuitem.setStatusTip(_("Subtract the first shape from the others."))
         self.geo_editor_menu.addSeparator()
         self.geo_cutpath_menuitem = self.geo_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/cutpath16.png'),
             '%s\t%s' % (_('Cut Path'), _('X')))
-        self.geo_cutpath_menuitem.setToolTip(_("Cut a shape using another shape as the cutter."))
-        self.geo_cutpath_menuitem.setStatusTip(_("Cut a shape using another shape as the cutter."))
+        self.geo_cutpath_menuitem.setToolTip(
+            _("Split a path where another shape crosses it, using that shape as a cutter "
+              "(shortcut: X). Handy for breaking a line into separate pieces.")
+        )
+        self.geo_cutpath_menuitem.setStatusTip(_("Cut a path using another shape."))
         # self.move_menuitem = self.menu.addAction(
         #   QtGui.QIcon(self.app.resource_location + '/move16.png'), "Move Objects 'm'")
         self.geo_copy_menuitem = self.geo_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/copy16.png'),
             '%s\t%s' % (_("Copy"), _('C')))
-        self.geo_copy_menuitem.setToolTip(_("Copy the selected shape(s)."))
+        self.geo_copy_menuitem.setToolTip(
+            _("Make a copy of the selected shape(s) and place it where you click (shortcut: "
+              "C). Useful for repeating a shape without redrawing it.")
+        )
         self.geo_copy_menuitem.setStatusTip(_("Copy the selected shape(s)."))
         self.geo_delete_menuitem = self.geo_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/deleteshape16.png'),
             '%s\t%s' % (_("Delete"), _('DEL'))
         )
-        self.geo_delete_menuitem.setToolTip(_("Delete the selected shape(s)."))
+        self.geo_delete_menuitem.setToolTip(
+            _("Remove the selected shape(s) from the geometry you are editing (Del). Select "
+              "the shapes first, then choose this item.")
+        )
         self.geo_delete_menuitem.setStatusTip(_("Delete the selected shape(s)."))
         self.geo_editor_menu.addSeparator()
         self.geo_move_menuitem = self.geo_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/move32.png'),
             '%s\t%s' % (_("Move"), _('M')))
-        self.geo_move_menuitem.setToolTip(_("Move the selected shape(s)."))
+        self.geo_move_menuitem.setToolTip(
+            _("Move the selected shape(s) to a new position (shortcut: M). Click a reference "
+              "point to pick them up, then click again where you want them dropped.")
+        )
         self.geo_move_menuitem.setStatusTip(_("Move the selected shape(s)."))
         self.geo_buffer_menuitem = self.geo_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/buffer32.png'),
             '%s\t%s' % (_("Buffer"), _('B'))
         )
-        self.geo_buffer_menuitem.setToolTip(_("Grow or shrink the selected shape(s) by a set distance."))
-        self.geo_buffer_menuitem.setStatusTip(_("Grow or shrink the selected shape(s) by a set distance."))
+        self.geo_buffer_menuitem.setToolTip(
+            _("Grow or shrink the selected shape(s) by a distance you enter (shortcut: B). A "
+              "positive value expands the outline outward; a negative value shrinks it "
+              "inward. Useful for adding clearance.")
+        )
+        self.geo_buffer_menuitem.setStatusTip(_("Grow or shrink the selected shape(s)."))
         self.geo_simplification_menuitem = self.geo_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/simplify32.png'),
             '%s\t%s' % (_("Simplification"), '')
         )
-        self.geo_simplification_menuitem.setToolTip(_("Reduce the number of points in the selected shape(s)."))
-        self.geo_simplification_menuitem.setStatusTip(_("Reduce the number of points in the selected shape(s)."))
+        self.geo_simplification_menuitem.setToolTip(
+            _("Reduce the number of points in the selected shape(s) while keeping the overall "
+              "form. This makes the geometry lighter and the resulting G-Code smaller; a "
+              "larger tolerance removes more points.")
+        )
+        self.geo_simplification_menuitem.setStatusTip(_("Reduce the number of points in the selection."))
         self.geo_paint_menuitem = self.geo_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/paint32.png'),
             '%s\t%s' % (_("Paint"), _('I'))
         )
-        self.geo_paint_menuitem.setToolTip(_("Fill the inside of the selected shape(s) with tool paths."))
-        self.geo_paint_menuitem.setStatusTip(_("Fill the inside of the selected shape(s) with tool paths."))
+        self.geo_paint_menuitem.setToolTip(
+            _("Fill the inside of the selected shape(s) with closely spaced tool paths "
+              "(shortcut: I). This clears out the whole area rather than just its outline, "
+              "the way a pocket is cleared.")
+        )
+        self.geo_paint_menuitem.setStatusTip(_("Fill the inside of the selection with tool paths."))
         self.geo_transform_menuitem = self.geo_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/transform.png'),
             '%s\t%s' % (_("Transform"), _('Alt+R'))
         )
-        self.geo_transform_menuitem.setToolTip(_("Rotate, skew, scale, mirror or offset the selected shape(s)."))
-        self.geo_transform_menuitem.setStatusTip(_("Rotate, skew, scale, mirror or offset the selected shape(s)."))
+        self.geo_transform_menuitem.setToolTip(
+            _("Open the Transform panel for the selected shape(s) (Alt+R). From there you can "
+              "rotate, skew, scale, mirror or offset them by precise amounts you type in.")
+        )
+        self.geo_transform_menuitem.setStatusTip(_("Transform the selected shape(s)."))
         self.geo_editor_menu.addSeparator()
         self.geo_cornersnap_menuitem = self.geo_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/corner32.png'),
             '%s\t%s' % (_("Toggle Corner Snap"), _('K'))
         )
-        self.geo_cornersnap_menuitem.setToolTip(_("Turn snapping to shape corners on or off."))
-        self.geo_cornersnap_menuitem.setStatusTip(_("Turn snapping to shape corners on or off."))
+        self.geo_cornersnap_menuitem.setToolTip(
+            _("Turn corner snapping on or off (shortcut: K). When on, the cursor jumps to the "
+              "corners and points of existing shapes, making it easy to connect new geometry "
+              "exactly to them.")
+        )
+        self.geo_cornersnap_menuitem.setStatusTip(_("Toggle snapping to shape corners."))
 
         # ########################################################################
         # ########################## EXCELLON Editor # ###########################
@@ -996,24 +1389,40 @@ class MainGUI(QtWidgets.QMainWindow):
         self.exc_add_array_drill_menuitem = self.exc_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/rectangle32.png'),
             '%s\t%s' % (_('Drill Array'), _('A')))
-        self.exc_add_array_drill_menuitem.setToolTip(_("Add a regular array (grid or circle) of drill holes."))
-        self.exc_add_array_drill_menuitem.setStatusTip(_("Add a regular array (grid or circle) of drill holes."))
+        self.exc_add_array_drill_menuitem.setToolTip(
+            _("Add many drill holes at once in a regular pattern (shortcut: A). Choose a grid "
+              "(rows and columns) or a circular layout and the spacing, then place it. Ideal "
+              "for connector or mounting-hole patterns.")
+        )
+        self.exc_add_array_drill_menuitem.setStatusTip(_("Add an array of drill holes."))
         self.exc_add_drill_menuitem = self.exc_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/plus16.png'),
             '%s\t%s' % (_('Drill'), _('D')))
-        self.exc_add_drill_menuitem.setToolTip(_("Add a single drill hole."))
+        self.exc_add_drill_menuitem.setToolTip(
+            _("Add one drill hole (shortcut: D). Click on the canvas to place it; it uses the "
+              "diameter of the currently selected tool. Add more tools to the table for "
+              "different hole sizes.")
+        )
         self.exc_add_drill_menuitem.setStatusTip(_("Add a single drill hole."))
         self.exc_editor_menu.addSeparator()
 
         self.exc_add_array_slot_menuitem = self.exc_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/slot_array26.png'),
             '%s\t%s' % (_('Slot Array'), _('Q')))
-        self.exc_add_array_slot_menuitem.setToolTip(_("Add a regular array (grid or circle) of slots."))
-        self.exc_add_array_slot_menuitem.setStatusTip(_("Add a regular array (grid or circle) of slots."))
+        self.exc_add_array_slot_menuitem.setToolTip(
+            _("Add many slots at once in a regular pattern (shortcut: Q). A slot is an "
+              "elongated hole. Choose a grid or circular layout and the spacing, then place "
+              "the whole set.")
+        )
+        self.exc_add_array_slot_menuitem.setStatusTip(_("Add an array of slots."))
         self.exc_add_slot_menuitem = self.exc_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/slot26.png'),
             '%s\t%s' % (_('Slot'), _('W')))
-        self.exc_add_slot_menuitem.setToolTip(_("Add a single slot."))
+        self.exc_add_slot_menuitem.setToolTip(
+            _("Add one slot, an elongated hole (shortcut: W). Click to set its position and "
+              "draw its length; it uses the currently selected tool's diameter for its "
+              "width.")
+        )
         self.exc_add_slot_menuitem.setStatusTip(_("Add a single slot."))
         self.exc_editor_menu.addSeparator()
 
@@ -1021,25 +1430,39 @@ class MainGUI(QtWidgets.QMainWindow):
             QtGui.QIcon(self.app.resource_location + '/resize16.png'),
             '%s\t%s' % (_('Resize Drill'), _('R'))
         )
-        self.exc_resize_drill_menuitem.setToolTip(_("Change the diameter of the selected drill(s)."))
+        self.exc_resize_drill_menuitem.setToolTip(
+            _("Change the diameter of the selected drill(s) (shortcut: R). Select the holes "
+              "first, then enter the new size. Useful for correcting hole sizes without "
+              "redrawing them.")
+        )
         self.exc_resize_drill_menuitem.setStatusTip(_("Change the diameter of the selected drill(s)."))
         self.exc_copy_drill_menuitem = self.exc_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/copy32.png'),
             '%s\t%s' % (_('Copy'), _('C')))
-        self.exc_copy_drill_menuitem.setToolTip(_("Copy the selected drill(s) or slot(s)."))
+        self.exc_copy_drill_menuitem.setToolTip(
+            _("Make a copy of the selected drill(s) or slot(s) and place it where you click "
+              "(shortcut: C). Useful for repeating holes without redrawing them.")
+        )
         self.exc_copy_drill_menuitem.setStatusTip(_("Copy the selected drill(s) or slot(s)."))
         self.exc_delete_drill_menuitem = self.exc_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/deleteshape32.png'),
             '%s\t%s' % (_('Delete'), _('DEL'))
         )
-        self.exc_delete_drill_menuitem.setToolTip(_("Delete the selected drill(s) or slot(s)."))
+        self.exc_delete_drill_menuitem.setToolTip(
+            _("Remove the selected drill(s) or slot(s) from the Excellon object you are "
+              "editing (Del). Select the holes first, then choose this item.")
+        )
         self.exc_delete_drill_menuitem.setStatusTip(_("Delete the selected drill(s) or slot(s)."))
         self.exc_editor_menu.addSeparator()
 
         self.exc_move_drill_menuitem = self.exc_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/move32.png'),
             '%s\t%s' % (_('Move'), _('M')))
-        self.exc_move_drill_menuitem.setToolTip(_("Move the selected drill(s) or slot(s)."))
+        self.exc_move_drill_menuitem.setToolTip(
+            _("Move the selected drill(s) or slot(s) to a new position (shortcut: M). Click a "
+              "reference point to pick them up, then click again where you want them "
+              "dropped.")
+        )
         self.exc_move_drill_menuitem.setStatusTip(_("Move the selected drill(s) or slot(s)."))
 
         # ########################################################################
@@ -1052,89 +1475,146 @@ class MainGUI(QtWidgets.QMainWindow):
         self.grb_add_pad_menuitem = self.grb_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/aperture16.png'),
             '%s\t%s' % (_('Pad'), _('P')))
-        self.grb_add_pad_menuitem.setToolTip(_("Add a single pad using the active aperture."))
-        self.grb_add_pad_menuitem.setStatusTip(_("Add a single pad using the active aperture."))
+        self.grb_add_pad_menuitem.setToolTip(
+            _("Add one copper pad using the currently selected aperture (shortcut: P). The "
+              "aperture sets the pad's shape and size. Click on the canvas to place it.")
+        )
+        self.grb_add_pad_menuitem.setStatusTip(_("Add a single pad."))
         self.grb_add_pad_array_menuitem = self.grb_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/padarray32.png'),
             '%s\t%s' % (_('Pad Array'), _('A')))
-        self.grb_add_pad_array_menuitem.setToolTip(_("Add a regular array (grid or circle) of pads."))
-        self.grb_add_pad_array_menuitem.setStatusTip(_("Add a regular array (grid or circle) of pads."))
+        self.grb_add_pad_array_menuitem.setToolTip(
+            _("Add many pads at once in a regular pattern (shortcut: A). Choose a grid or "
+              "circular layout and the spacing, then place the whole set - ideal for "
+              "connector footprints.")
+        )
+        self.grb_add_pad_array_menuitem.setStatusTip(_("Add an array of pads."))
         self.grb_add_track_menuitem = self.grb_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/track32.png'),
             '%s\t%s' % (_('Track'), _('T')))
-        self.grb_add_track_menuitem.setToolTip(_("Draw a copper track (trace)."))
-        self.grb_add_track_menuitem.setStatusTip(_("Draw a copper track (trace)."))
+        self.grb_add_track_menuitem.setToolTip(
+            _("Draw a copper track - the line that carries a signal between pads (shortcut: "
+              "T). Click each point along the route; its width comes from the active "
+              "aperture.")
+        )
+        self.grb_add_track_menuitem.setStatusTip(_("Draw a copper track."))
         self.grb_add_region_menuitem = self.grb_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/rectangle32.png'),
             '%s\t%s' % (_('Region'), _('N')))
-        self.grb_add_region_menuitem.setToolTip(_("Draw a filled copper region (polygon)."))
-        self.grb_add_region_menuitem.setStatusTip(_("Draw a filled copper region (polygon)."))
+        self.grb_add_region_menuitem.setToolTip(
+            _("Draw a filled copper region by clicking its corners (shortcut: N). The whole "
+              "enclosed area becomes solid copper - used for ground pours and large copper "
+              "fills. Press Enter to close the region.")
+        )
+        self.grb_add_region_menuitem.setStatusTip(_("Draw a filled copper region."))
         self.grb_editor_menu.addSeparator()
 
         self.grb_convert_poly_menuitem = self.grb_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/poligonize32.png'),
             '%s\t%s' % (_("Poligonize"), _('Alt+N')))
-        self.grb_convert_poly_menuitem.setToolTip(_("Turn the selected geometry into a filled polygon."))
-        self.grb_convert_poly_menuitem.setStatusTip(_("Turn the selected geometry into a filled polygon."))
+        self.grb_convert_poly_menuitem.setToolTip(
+            _("Turn the selected geometry into a single filled polygon (Alt+N). Use this to "
+              "convert a set of lines or shapes that enclose an area into one solid copper "
+              "region.")
+        )
+        self.grb_convert_poly_menuitem.setStatusTip(_("Convert the selection into a filled polygon."))
         self.grb_add_semidisc_menuitem = self.grb_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/semidisc32.png'),
             '%s\t%s' % (_("SemiDisc"), _('E')))
-        self.grb_add_semidisc_menuitem.setToolTip(_("Draw a semi-disc (half circle) shape."))
-        self.grb_add_semidisc_menuitem.setStatusTip(_("Draw a semi-disc (half circle) shape."))
+        self.grb_add_semidisc_menuitem.setToolTip(
+            _("Draw a semi-disc, a solid half-circle of copper (shortcut: E). Click to set "
+              "its centre and edge points. A handy primitive for rounded copper features.")
+        )
+        self.grb_add_semidisc_menuitem.setStatusTip(_("Draw a semi-disc (half circle)."))
         self.grb_add_disc_menuitem = self.grb_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/disc32.png'),
             '%s\t%s' % (_("Disc"), _('D')))
-        self.grb_add_disc_menuitem.setToolTip(_("Draw a filled disc (solid circle) shape."))
-        self.grb_add_disc_menuitem.setStatusTip(_("Draw a filled disc (solid circle) shape."))
+        self.grb_add_disc_menuitem.setToolTip(
+            _("Draw a disc, a solid filled circle of copper (shortcut: D). Click for the "
+              "centre, then click again to set the radius.")
+        )
+        self.grb_add_disc_menuitem.setStatusTip(_("Draw a filled disc (solid circle)."))
         self.grb_add_buffer_menuitem = self.grb_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/buffer32.png'),
             '%s\t%s' % (_('Buffer'), _('B')))
-        self.grb_add_buffer_menuitem.setToolTip(_("Grow or shrink the selected geometry by a set distance."))
-        self.grb_add_buffer_menuitem.setStatusTip(_("Grow or shrink the selected geometry by a set distance."))
+        self.grb_add_buffer_menuitem.setToolTip(
+            _("Grow or shrink the selected copper by a distance you enter (shortcut: B). A "
+              "positive value widens the copper; a negative value narrows it. Useful for "
+              "adjusting clearances.")
+        )
+        self.grb_add_buffer_menuitem.setStatusTip(_("Grow or shrink the selected copper."))
         self.grb_simplification_menuitem = self.geo_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/simplify32.png'),
             '%s\t%s' % (_("Simplification"), '')
         )
-        self.grb_simplification_menuitem.setToolTip(_("Reduce the number of points in the selected geometry."))
-        self.grb_simplification_menuitem.setStatusTip(_("Reduce the number of points in the selected geometry."))
+        self.grb_simplification_menuitem.setToolTip(
+            _("Reduce the number of points in the selected copper geometry while keeping its "
+              "shape. This makes the data lighter; a larger tolerance removes more points.")
+        )
+        self.grb_simplification_menuitem.setStatusTip(_("Reduce the number of points in the selection."))
         self.grb_add_scale_menuitem = self.grb_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/scale32.png'),
             '%s\t%s' % (_('Scale'), _('S')))
-        self.grb_add_scale_menuitem.setToolTip(_("Resize the selected geometry by a scale factor."))
-        self.grb_add_scale_menuitem.setStatusTip(_("Resize the selected geometry by a scale factor."))
+        self.grb_add_scale_menuitem.setToolTip(
+            _("Resize the selected copper geometry by a scale factor you enter (shortcut: S). "
+              "A factor of 2 doubles the size, 0.5 halves it. Affects the whole selection "
+              "proportionally.")
+        )
+        self.grb_add_scale_menuitem.setStatusTip(_("Resize the selection by a scale factor."))
         self.grb_add_markarea_menuitem = self.grb_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/markarea32.png'),
             '%s\t%s' % (_('Mark Area'), _('Alt+A')))
-        self.grb_add_markarea_menuitem.setToolTip(_("Highlight apertures whose area falls in a chosen range."))
-        self.grb_add_markarea_menuitem.setStatusTip(_("Highlight apertures whose area falls in a chosen range."))
+        self.grb_add_markarea_menuitem.setToolTip(
+            _("Highlight copper features whose area falls within a range you set (Alt+A). "
+              "Handy for finding all pads or shapes of a certain size so you can check or "
+              "select them.")
+        )
+        self.grb_add_markarea_menuitem.setStatusTip(_("Highlight features within an area range."))
         self.grb_add_eraser_menuitem = self.grb_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/eraser26.png'),
             '%s\t%s' % (_('Eraser'), _('Ctrl+E')))
-        self.grb_add_eraser_menuitem.setToolTip(_("Erase copper from the selected geometry."))
-        self.grb_add_eraser_menuitem.setStatusTip(_("Erase copper from the selected geometry."))
+        self.grb_add_eraser_menuitem.setToolTip(
+            _("Erase copper by drawing over it (Ctrl+E). Anything the eraser shape covers is "
+              "removed from the copper. Useful for cutting gaps or clearing small areas by "
+              "hand.")
+        )
+        self.grb_add_eraser_menuitem.setStatusTip(_("Erase copper from the geometry."))
         self.grb_transform_menuitem = self.grb_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/transform.png'),
             '%s\t%s' % (_("Transform"), _('Alt+R')))
-        self.grb_transform_menuitem.setToolTip(_("Rotate, skew, scale, mirror or offset the selected geometry."))
-        self.grb_transform_menuitem.setStatusTip(_("Rotate, skew, scale, mirror or offset the selected geometry."))
+        self.grb_transform_menuitem.setToolTip(
+            _("Open the Transform panel for the selected copper geometry (Alt+R). From there "
+              "you can rotate, skew, scale, mirror or offset it by precise amounts you type "
+              "in.")
+        )
+        self.grb_transform_menuitem.setStatusTip(_("Transform the selected geometry."))
         self.grb_editor_menu.addSeparator()
 
         self.grb_copy_menuitem = self.grb_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/copy32.png'),
             '%s\t%s' % (_('Copy'), _('C')))
-        self.grb_copy_menuitem.setToolTip(_("Copy the selected geometry."))
+        self.grb_copy_menuitem.setToolTip(
+            _("Make a copy of the selected copper geometry and place it where you click "
+              "(shortcut: C). Useful for repeating pads or shapes without redrawing them.")
+        )
         self.grb_copy_menuitem.setStatusTip(_("Copy the selected geometry."))
         self.grb_delete_menuitem = self.grb_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/deleteshape32.png'),
             '%s\t%s' % (_('Delete'), _('DEL')))
-        self.grb_delete_menuitem.setToolTip(_("Delete the selected geometry."))
+        self.grb_delete_menuitem.setToolTip(
+            _("Remove the selected copper geometry from the Gerber object you are editing "
+              "(Del). Select the features first, then choose this item.")
+        )
         self.grb_delete_menuitem.setStatusTip(_("Delete the selected geometry."))
         self.grb_editor_menu.addSeparator()
 
         self.grb_move_menuitem = self.grb_editor_menu.addAction(
             QtGui.QIcon(self.app.resource_location + '/move32.png'),
             '%s\t%s' % (_('Move'), _('M')))
-        self.grb_move_menuitem.setToolTip(_("Move the selected geometry."))
+        self.grb_move_menuitem.setToolTip(
+            _("Move the selected copper geometry to a new position (shortcut: M). Click a "
+              "reference point to pick it up, then click again where you want it dropped.")
+        )
         self.grb_move_menuitem.setStatusTip(_("Move the selected geometry."))
 
         self.grb_editor_menu.menuAction().setVisible(False)
@@ -1154,93 +1634,141 @@ class MainGUI(QtWidgets.QMainWindow):
 
         self.menuprojectenable = self.menuproject.addAction(
             QtGui.QIcon(self.app.resource_location + '/replot32.png'), _('Enable Plot'))
-        self.menuprojectenable.setToolTip(_("Make the selected object(s) visible on the plot."))
-        self.menuprojectenable.setStatusTip(_("Make the selected object(s) visible on the plot."))
+        self.menuprojectenable.setToolTip(
+            _("Turn on the plot for the selected object(s) so they show on the canvas. Use "
+              "this to bring back objects you had hidden.")
+        )
+        self.menuprojectenable.setStatusTip(_("Show the selected object(s) on the plot."))
         self.menuprojectdisable = self.menuproject.addAction(
             QtGui.QIcon(self.app.resource_location + '/clear_plot32.png'), _('Disable Plot'))
-        self.menuprojectdisable.setToolTip(_("Hide the selected object(s) from the plot."))
+        self.menuprojectdisable.setToolTip(
+            _("Hide the selected object(s) from the canvas. They stay in the project - this "
+              "only removes them from view to reduce clutter.")
+        )
         self.menuprojectdisable.setStatusTip(_("Hide the selected object(s) from the plot."))
         self.menuproject.addSeparator()
 
         self.menuprojectcolor = self.menuproject.addMenu(
             QtGui.QIcon(self.app.resource_location + '/set_color32.png'), _('Set Color'))
         self.menuprojectcolor.setToolTipsVisible(True)
+        self.menuprojectcolor.setToolTip(
+            _("Change the colour the selected object(s) are drawn in. Pick a ready-made "
+              "colour or choose Custom, and use Opacity to make objects see-through so you "
+              "can view layers underneath.")
+        )
 
         self.menuproject_red = self.menuprojectcolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/red32.png'), _('Red'))
+        self.menuproject_red.setToolTip(_("Colour the selected object(s) red."))
 
         self.menuproject_blue = self.menuprojectcolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/blue32.png'), _('Blue'))
+        self.menuproject_blue.setToolTip(_("Colour the selected object(s) blue."))
 
         self.menuproject_yellow = self.menuprojectcolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/yellow32.png'), _('Yellow'))
+        self.menuproject_yellow.setToolTip(_("Colour the selected object(s) yellow."))
 
         self.menuproject_green = self.menuprojectcolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/green32.png'), _('Green'))
+        self.menuproject_green.setToolTip(_("Colour the selected object(s) green."))
 
         self.menuproject_purple = self.menuprojectcolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/violet32.png'), _('Purple'))
+        self.menuproject_purple.setToolTip(_("Colour the selected object(s) purple."))
 
         self.menuproject_brown = self.menuprojectcolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/brown32.png'), _('Brown'))
+        self.menuproject_brown.setToolTip(_("Colour the selected object(s) brown."))
 
         self.menuproject_brown = self.menuprojectcolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/indigo32.png'), _('Indigo'))
+        self.menuproject_brown.setToolTip(_("Colour the selected object(s) indigo."))
 
         self.menuproject_brown = self.menuprojectcolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/white32.png'), _('White'))
+        self.menuproject_brown.setToolTip(_("Colour the selected object(s) white."))
 
         self.menuproject_brown = self.menuprojectcolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/black32.png'), _('Black'))
+        self.menuproject_brown.setToolTip(_("Colour the selected object(s) black."))
 
         self.menuprojectcolor.addSeparator()
 
         self.menuproject_custom = self.menuprojectcolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/set_color32.png'), _('Custom'))
-        self.menuproject_custom.setToolTip(_("Pick a custom color for the selected object(s)."))
-        self.menuproject_custom.setStatusTip(_("Pick a custom color for the selected object(s)."))
+        self.menuproject_custom.setToolTip(
+            _("Open a colour picker to choose any colour for the selected object(s), beyond "
+              "the preset colours above.")
+        )
+        self.menuproject_custom.setStatusTip(_("Pick a custom colour for the selection."))
 
         self.menuprojectcolor.addSeparator()
 
         self.menuproject_custom = self.menuprojectcolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/set_color32.png'), _('Opacity'))
-        self.menuproject_custom.setToolTip(_("Set the transparency of the selected object(s)."))
-        self.menuproject_custom.setStatusTip(_("Set the transparency of the selected object(s)."))
+        self.menuproject_custom.setToolTip(
+            _("Set how see-through the selected object(s) are. Lower opacity lets you view "
+              "objects or layers sitting underneath.")
+        )
+        self.menuproject_custom.setStatusTip(_("Set the transparency of the selection."))
 
         self.menuproject_custom = self.menuprojectcolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/set_color32.png'), _('Default'))
-        self.menuproject_custom.setToolTip(_("Reset the selected object(s) to the default color."))
-        self.menuproject_custom.setStatusTip(_("Reset the selected object(s) to the default color."))
+        self.menuproject_custom.setToolTip(
+            _("Reset the selected object(s) back to their standard colour and opacity, "
+              "undoing any custom colour you set.")
+        )
+        self.menuproject_custom.setStatusTip(_("Reset the selection to the default colour."))
 
         self.menuproject.addSeparator()
 
         self.menuprojectviewsource = self.menuproject.addAction(
             QtGui.QIcon(self.app.resource_location + '/source32.png'), _('View Source'))
-        self.menuprojectviewsource.setToolTip(_("Show the raw source code of the selected object."))
-        self.menuprojectviewsource.setStatusTip(_("Show the raw source code of the selected object."))
+        self.menuprojectviewsource.setToolTip(
+            _("Show the raw text source of the selected object - the Gerber, Excellon or "
+              "G-Code it was built from. Opens in a read-only viewer for inspection.")
+        )
+        self.menuprojectviewsource.setStatusTip(_("View the source code of the selected object."))
 
         self.menuprojectedit = self.menuproject.addAction(
             QtGui.QIcon(self.app.resource_location + '/edit_ok32.png'), _('Edit'))
-        self.menuprojectedit.setToolTip(_("Open the selected object in its interactive editor."))
-        self.menuprojectedit.setStatusTip(_("Open the selected object in its interactive editor."))
+        self.menuprojectedit.setToolTip(
+            _("Open the selected object in its interactive editor so you can change it by "
+              "hand. The editor that opens matches the object type (Gerber, Excellon or "
+              "Geometry).")
+        )
+        self.menuprojectedit.setStatusTip(_("Edit the selected object."))
         self.menuprojectcopy = self.menuproject.addAction(
             QtGui.QIcon(self.app.resource_location + '/copy32.png'), _('Copy'))
-        self.menuprojectcopy.setToolTip(_("Make a copy of the selected object(s)."))
-        self.menuprojectcopy.setStatusTip(_("Make a copy of the selected object(s)."))
+        self.menuprojectcopy.setToolTip(
+            _("Make a duplicate of the selected object(s). The copy is added to the project "
+              "with a new name - handy before trying a change you might want to undo.")
+        )
+        self.menuprojectcopy.setStatusTip(_("Duplicate the selected object(s)."))
         self.menuprojectdelete = self.menuproject.addAction(
             QtGui.QIcon(self.app.resource_location + '/delete32.png'), _('Delete'))
-        self.menuprojectdelete.setToolTip(_("Delete the selected object(s) from the project."))
-        self.menuprojectdelete.setStatusTip(_("Delete the selected object(s) from the project."))
+        self.menuprojectdelete.setToolTip(
+            _("Remove the selected object(s) from the project. This cannot be undone, but the "
+              "files on disk are not affected - only the objects loaded here.")
+        )
+        self.menuprojectdelete.setStatusTip(_("Delete the selected object(s)."))
         self.menuprojectsave = self.menuproject.addAction(
             QtGui.QIcon(self.app.resource_location + '/save_as.png'), _('Save'))
-        self.menuprojectsave.setToolTip(_("Save the selected object to a file."))
+        self.menuprojectsave.setToolTip(
+            _("Save just the selected object out to its own file, in a format that matches "
+              "its type. Use this to export one object without saving the whole project.")
+        )
         self.menuprojectsave.setStatusTip(_("Save the selected object to a file."))
         self.menuproject.addSeparator()
 
         self.menuprojectproperties = self.menuproject.addAction(
             QtGui.QIcon(self.app.resource_location + '/properties32.png'), _('Properties'))
-        self.menuprojectproperties.setToolTip(_("Show detailed properties of the selected object."))
-        self.menuprojectproperties.setStatusTip(_("Show detailed properties of the selected object."))
+        self.menuprojectproperties.setToolTip(
+            _("Show detailed information about the selected object in the Properties tab - "
+              "things like its size, area, number of tools and estimated machining time.")
+        )
+        self.menuprojectproperties.setStatusTip(_("Show properties of the selected object."))
 
         # ########################################################################
         # ####################### Central Widget -> Splitter # ##################
@@ -1345,23 +1873,39 @@ class MainGUI(QtWidgets.QMainWindow):
         # ########################################################################
         self.file_open_gerber_btn = self.toolbarfile.addAction(
             QtGui.QIcon(self.app.resource_location + '/open_gerber32.png'), _("Gerber"))
-        self.file_open_gerber_btn.setToolTip(_("Open a Gerber file."))
+        self.file_open_gerber_btn.setToolTip(
+            _("Open a Gerber file (copper, solder mask or silkscreen) as a new object "
+              "(Ctrl+G). The same as File -> Open -> Open Gerber.")
+        )
         self.file_open_excellon_btn = self.toolbarfile.addAction(
             QtGui.QIcon(self.app.resource_location + '/open_excellon32.png'), _("Excellon"))
-        self.file_open_excellon_btn.setToolTip(_("Open a Excellon file."))
+        self.file_open_excellon_btn.setToolTip(
+            _("Open an Excellon drill file as a new object (Ctrl+E). The same as File -> "
+              "Open -> Open Excellon.")
+        )
         self.toolbarfile.addSeparator()
         self.file_open_btn = self.toolbarfile.addAction(
             QtGui.QIcon(self.app.resource_location + '/folder32.png'), _("Open"))
-        self.file_open_btn.setToolTip(_("Open a project."))
+        self.file_open_btn.setToolTip(
+            _("Open a saved project file (.FlatPrj), restoring all its objects and settings "
+              "(Ctrl+O). Replaces the current work, so save first if needed.")
+        )
         self.file_save_btn = self.toolbarfile.addAction(
             QtGui.QIcon(self.app.resource_location + '/save_as.png'), _("Save"))
-        self.file_save_btn.setToolTip(_("Save the current project."))
+        self.file_save_btn.setToolTip(
+            _("Save the current project to its file (Ctrl+S). If it has no file yet you will "
+              "be asked for a name.")
+        )
 
         # ########################################################################
         # ########################## Edit Toolbar# ###############################
         # ########################################################################
         self.editor_start_btn = self.toolbaredit.addAction(
             QtGui.QIcon(self.app.resource_location + '/edit_file32.png'), _("Editor"))
+        self.editor_start_btn.setToolTip(
+            _("Open the selected object in its interactive editor so you can change it by "
+              "hand (shortcut: E). The editor that opens matches the object type.")
+        )
         self.editor_exit_btn = QtWidgets.QToolButton()
 
         # https://www.w3.org/TR/SVG11/types.html#ColorKeywords
@@ -1373,27 +1917,44 @@ class MainGUI(QtWidgets.QMainWindow):
                                           }
                                           """)
         self.editor_exit_btn.setIcon(QtGui.QIcon(self.app.resource_location + '/power16.png'))
-        self.editor_exit_btn.setToolTip(_("Exit from Editor."))
+        self.editor_exit_btn.setToolTip(
+            _("Leave the current editor and apply your changes to the object (Ctrl+S). This "
+              "button only appears while you are editing.")
+        )
         # in order to hide it we hide the returned action
         self.editor_exit_btn_ret_action = self.toolbaredit.addWidget(self.editor_exit_btn)
 
         self.toolbaredit.addSeparator()
         self.copy_btn = self.toolbaredit.addAction(
             QtGui.QIcon(self.app.resource_location + '/copy_file32.png'), _("Copy"))
-        self.copy_btn.setToolTip(_("Copy a selection of objects."))
+        self.copy_btn.setToolTip(
+            _("Make a duplicate of the selected object(s) (Ctrl+C). The copies are added to "
+              "the project with new names.")
+        )
         self.delete_btn = self.toolbaredit.addAction(
             QtGui.QIcon(self.app.resource_location + '/trash32.png'), _("Delete"))
-        self.delete_btn.setToolTip(_("Delete a selection of objects."))
+        self.delete_btn.setToolTip(
+            _("Remove the selected object(s) from the project (Del). This cannot be undone; "
+              "the files on disk are not affected.")
+        )
         self.toolbaredit.addSeparator()
         self.distance_btn = self.toolbaredit.addAction(
             QtGui.QIcon(self.app.resource_location + '/distance32.png'), _("Distance"))
-        self.distance_btn.setToolTip(_("Measure a distance between two or more points."))
+        self.distance_btn.setToolTip(
+            _("Measure the distance between two points on the canvas (Ctrl+M). Click the "
+              "start point, then the end point, to read the straight-line distance plus the "
+              "X and Y gaps and angle.")
+        )
         # self.distance_min_btn = self.toolbaredit.addAction(
         #     QtGui.QIcon(self.app.resource_location + '/distance_min32.png'), _("Min Distance"))
         # self.distance_min_btn.setToolTip(_("Measure the minimum distance between two objects."))
         self.origin_btn = self.toolbaredit.addAction(
             QtGui.QIcon(self.app.resource_location + '/origin32.png'), _('Set Origin'))
-        self.origin_btn.setToolTip(_("Set an origin to a custom location."))
+        self.origin_btn.setToolTip(
+            _("Set where the (0, 0) point of the work is by clicking a spot on the canvas "
+              "(shortcut: O). Everything is measured from this origin, which usually matches "
+              "the machine's zero.")
+        )
         # self.move2origin_btn = self.toolbaredit.addAction(
         #     QtGui.QIcon(self.app.resource_location + '/move2origin32.png'), _('To Orig.'))
         # self.move2origin_btn.setToolTip(_("Move selected objects to the origin."))
@@ -1403,24 +1964,50 @@ class MainGUI(QtWidgets.QMainWindow):
 
         self.jmp_btn = self.toolbaredit.addAction(
             QtGui.QIcon(self.app.resource_location + '/jump_to32.png'), _('Jump to'))
-        self.jmp_btn.setToolTip(_("Move the mouse cursor to a defined position and center into view."))
+        self.jmp_btn.setToolTip(
+            _("Jump the view to X, Y coordinates that you type in, centring them on screen "
+              "and moving the cursor there (shortcut: J). Handy on a large board.")
+        )
         self.locate_btn = self.toolbaredit.addAction(
             QtGui.QIcon(self.app.resource_location + '/locate32.png'), _('Locate'))
-        self.locate_btn.setToolTip(_("Locate a predefined position on a selected object."))
+        self.locate_btn.setToolTip(
+            _("Jump the view to a chosen reference point of the selected object, such as a "
+              "corner or its centre (Shift+J). Useful for finding a known feature quickly.")
+        )
 
         # ########################################################################
         # ########################## View Toolbar# ###############################
         # ########################################################################
         self.replot_btn = self.toolbarview.addAction(
             QtGui.QIcon(self.app.resource_location + '/replot32.png'), _("Replot"))
+        self.replot_btn.setToolTip(
+            _("Redraw every object on the canvas from scratch (F5). Use this if the display "
+              "looks wrong or out of date.")
+        )
         self.clear_plot_btn = self.toolbarview.addAction(
             QtGui.QIcon(self.app.resource_location + '/clear_plot32.png'), _("Clear Plot"))
+        self.clear_plot_btn.setToolTip(
+            _("Wipe everything off the canvas display. The objects stay in the project; only "
+              "the drawing is cleared. Use Replot to draw them again.")
+        )
         self.zoom_in_btn = self.toolbarview.addAction(
             QtGui.QIcon(self.app.resource_location + '/zoom_in32.png'), _("Zoom In"))
+        self.zoom_in_btn.setToolTip(
+            _("Zoom the view in to see finer detail (shortcut: =). You can also scroll the "
+              "mouse wheel over the canvas.")
+        )
         self.zoom_out_btn = self.toolbarview.addAction(
             QtGui.QIcon(self.app.resource_location + '/zoom_out32.png'), _("Zoom Out"))
+        self.zoom_out_btn.setToolTip(
+            _("Zoom the view out to see more at once (shortcut: -). You can also scroll the "
+              "mouse wheel over the canvas.")
+        )
         self.zoom_fit_btn = self.toolbarview.addAction(
             QtGui.QIcon(self.app.resource_location + '/zoom_fit32.png'), _("Zoom Fit"))
+        self.zoom_fit_btn.setToolTip(
+            _("Zoom and centre so all visible objects fit neatly on screen (shortcut: V). "
+              "The quickest way to get your bearings.")
+        )
 
         # self.toolbarview.setVisible(False)
 
@@ -1429,12 +2016,27 @@ class MainGUI(QtWidgets.QMainWindow):
         # ########################################################################
         self.shell_btn = self.toolbarshell.addAction(
             QtGui.QIcon(self.app.resource_location + '/shell32.png'), _("Command Line"))
+        self.shell_btn.setToolTip(
+            _("Open the Tcl command-line shell (shortcut: S), where you can type commands to "
+              "control and automate the application. Script output also appears here.")
+        )
         self.new_script_btn = self.toolbarshell.addAction(
             QtGui.QIcon(self.app.resource_location + '/script_new24.png'), '%s ...' % _('New Script'))
+        self.new_script_btn.setToolTip(
+            _("Create a new, empty Tcl script object with a starter template, ready for you "
+              "to write automation commands.")
+        )
         self.open_script_btn = self.toolbarshell.addAction(
             QtGui.QIcon(self.app.resource_location + '/open_script32.png'), '%s ...' % _('Open Script'))
+        self.open_script_btn.setToolTip(
+            _("Open an existing Tcl script file from disk so you can view, edit and run it.")
+        )
         self.run_script_btn = self.toolbarshell.addAction(
             QtGui.QIcon(self.app.resource_location + '/script16.png'), '%s ...' % _('Run Script'))
+        self.run_script_btn.setToolTip(
+            _("Run the currently opened Tcl script (Shift+S), executing its commands in order "
+              "to automate a task. Watch the Tcl shell for output and errors.")
+        )
 
         # ########################################################################
         # ########################## Tools Toolbar# ##############################
@@ -1699,27 +2301,39 @@ class MainGUI(QtWidgets.QMainWindow):
         # ########################## Status Toolbar ##############################
         # ########################################################################
         self.axis_status_label = FCLabel()
-        self.axis_status_label.setToolTip(_("Toggle the display of axis on canvas"))
+        self.axis_status_label.setToolTip(
+            _("Click to show or hide the X and Y axis lines on the canvas (Shift+A). The "
+              "axes mark where the origin is and which way the directions point.")
+        )
         self.axis_status_label.setPixmap(QtGui.QPixmap(self.app.resource_location + '/axis18.png'))
         self.status_toolbar.addWidget(self.axis_status_label)
         self.status_toolbar.addWidget(FCLabel(" "))
 
         self.pref_status_label = FCLabel()
-        self.pref_status_label.setToolTip(_("Preferences"))
+        self.pref_status_label.setToolTip(
+            _("Click to open the Preferences, where you can change units, colours, export "
+              "formats and tool defaults (Shift+P).")
+        )
         self.pref_status_label.setPixmap(QtGui.QPixmap(self.app.resource_location + '/settings18.png'))
         self.status_toolbar.addWidget(self.pref_status_label)
         self.status_toolbar.addWidget(FCLabel(" "))
 
         self.hud_label = FCLabel()
-        self.hud_label.setToolTip(_("HUD (Heads up display)"))
+        self.hud_label.setToolTip(
+            _("Click to show or hide the heads-up display on the canvas (Shift+H). The HUD "
+              "shows live information such as the cursor position and units as you move the "
+              "mouse.")
+        )
         self.hud_label.setPixmap(QtGui.QPixmap(self.app.resource_location + '/hud18.png'))
         self.status_toolbar.addWidget(self.hud_label)
         self.status_toolbar.addWidget(FCLabel(" "))
 
         self.wplace_label = FCLabel("A4")
-        self.wplace_label.setToolTip(_("Draw a delimiting rectangle on canvas.\n"
-                                       "The purpose is to illustrate the limits for our work.")
-                                     )
+        self.wplace_label.setToolTip(
+            _("Click to show or hide the workspace rectangle on the canvas (Shift+W). It "
+              "marks the limits of your material or working area; the size shown here (for "
+              "example A4) is set in Preferences.")
+        )
         self.wplace_label.setMargin(2)
         self.status_toolbar.addWidget(self.wplace_label)
         self.status_toolbar.addWidget(FCLabel(" "))
@@ -2054,25 +2668,40 @@ class MainGUI(QtWidgets.QMainWindow):
         self.cmenu_viewmenu.setToolTipsVisible(True)
         self.popmenu_disable = self.cmenu_viewmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/disable32.png'), _("Toggle Visibility"))
-        self.popmenu_disable.setToolTip(_("Show or hide the selected object(s) on the plot."))
-        self.popmenu_disable.setStatusTip(_("Show or hide the selected object(s) on the plot."))
+        self.popmenu_disable.setToolTip(
+            _("Show or hide the object(s) you right-clicked on. A quick way to toggle whether "
+              "they appear on the canvas without changing anything else.")
+        )
+        self.popmenu_disable.setStatusTip(_("Show or hide the selected object(s)."))
         self.popmenu_panel_toggle = self.cmenu_viewmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/notebook16.png'), _("Toggle Panel"))
-        self.popmenu_panel_toggle.setToolTip(_("Show or hide the left panel (Project/Properties/Tool)."))
-        self.popmenu_panel_toggle.setStatusTip(_("Show or hide the left panel (Project/Properties/Tool)."))
+        self.popmenu_panel_toggle.setToolTip(
+            _("Show or hide the left-hand panel with the Project, Properties and Tool tabs "
+              "(shortcut: ` , the backtick key). Hide it to give the canvas more room.")
+        )
+        self.popmenu_panel_toggle.setStatusTip(_("Show or hide the left panel."))
         self.cmenu_viewmenu.addSeparator()
         self.zoomfit = self.cmenu_viewmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/zoom_fit32.png'), _("Zoom Fit"))
-        self.zoomfit.setToolTip(_("Zoom so all visible objects fit in the Plot Area."))
-        self.zoomfit.setStatusTip(_("Zoom so all visible objects fit in the Plot Area."))
+        self.zoomfit.setToolTip(
+            _("Zoom and centre the view so all visible objects fit neatly on screen "
+              "(shortcut: V).")
+        )
+        self.zoomfit.setStatusTip(_("Zoom to fit all visible objects."))
         self.clearplot = self.cmenu_viewmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/clear_plot32.png'), _("Clear Plot"))
-        self.clearplot.setToolTip(_("Remove everything from the Plot Area display."))
-        self.clearplot.setStatusTip(_("Remove everything from the Plot Area display."))
+        self.clearplot.setToolTip(
+            _("Wipe everything off the canvas display. The objects stay in the project; only "
+              "the drawing is cleared. Use Replot to draw them again.")
+        )
+        self.clearplot.setStatusTip(_("Clear the canvas display."))
         self.replot = self.cmenu_viewmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/replot32.png'), _("Replot"))
-        self.replot.setToolTip(_("Redraw every object on the plot."))
-        self.replot.setStatusTip(_("Redraw every object on the plot."))
+        self.replot.setToolTip(
+            _("Redraw every object on the canvas from scratch (F5). Use this if the display "
+              "looks wrong or out of date.")
+        )
+        self.replot.setStatusTip(_("Redraw all objects."))
 
         self.popMenu.addSeparator()
         self.cmenu_newmenu = self.popMenu.addMenu(
@@ -2080,20 +2709,32 @@ class MainGUI(QtWidgets.QMainWindow):
         self.cmenu_newmenu.setToolTipsVisible(True)
         self.popmenu_new_geo = self.cmenu_newmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/new_file_geo16.png'), _("Geometry"))
-        self.popmenu_new_geo.setToolTip(_("Create a new, empty Geometry object."))
+        self.popmenu_new_geo.setToolTip(
+            _("Create a new, empty Geometry object (shortcut: N). It holds tool-path shapes "
+              "you can draw in the Geometry Editor and turn into G-Code.")
+        )
         self.popmenu_new_geo.setStatusTip(_("Create a new, empty Geometry object."))
         self.popmenu_new_grb = self.cmenu_newmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/new_file_grb16.png'), "Gerber")
-        self.popmenu_new_grb.setToolTip(_("Create a new, empty Gerber object."))
+        self.popmenu_new_grb.setToolTip(
+            _("Create a new, empty Gerber object (shortcut: B). It represents a copper layer "
+              "you can build by hand in the Gerber Editor.")
+        )
         self.popmenu_new_grb.setStatusTip(_("Create a new, empty Gerber object."))
         self.popmenu_new_exc = self.cmenu_newmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/new_file_exc16.png'), _("Excellon"))
-        self.popmenu_new_exc.setToolTip(_("Create a new, empty Excellon object."))
+        self.popmenu_new_exc.setToolTip(
+            _("Create a new, empty Excellon object (shortcut: L). It holds drill holes and "
+              "slots you can place by hand in the Excellon Editor.")
+        )
         self.popmenu_new_exc.setStatusTip(_("Create a new, empty Excellon object."))
         self.cmenu_newmenu.addSeparator()
         self.popmenu_new_prj = self.cmenu_newmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/file16.png'), _("Project"))
-        self.popmenu_new_prj.setToolTip(_("Create a new, blank project."))
+        self.popmenu_new_prj.setToolTip(
+            _("Start a brand new, empty project (Ctrl+N), clearing the current work area. "
+              "You will be asked to save any unsaved changes first.")
+        )
         self.popmenu_new_prj.setStatusTip(_("Create a new, blank project."))
         self.popMenu.addSeparator()
 
@@ -2101,6 +2742,11 @@ class MainGUI(QtWidgets.QMainWindow):
         self.cmenu_gridmenu = self.popMenu.addMenu(
             QtGui.QIcon(self.app.resource_location + '/grid32_menu.png'), _("Grids"))
         self.cmenu_gridmenu.setToolTipsVisible(True)
+        self.cmenu_gridmenu.setToolTip(
+            _("Quickly switch the snapping grid to one of your saved spacings. Pick a value "
+              "to set how far apart the snap points are; you can manage these presets here "
+              "too.")
+        )
 
         self.popMenu.addSeparator()
 
@@ -2108,52 +2754,75 @@ class MainGUI(QtWidgets.QMainWindow):
         self.pop_menucolor = self.popMenu.addMenu(
             QtGui.QIcon(self.app.resource_location + '/set_color32.png'), _('Set Color'))
         self.pop_menucolor.setToolTipsVisible(True)
+        self.pop_menucolor.setToolTip(
+            _("Change the colour the selected object(s) are drawn in. Pick a ready-made "
+              "colour or choose Custom, and use Opacity to make objects see-through so you "
+              "can view layers underneath.")
+        )
 
         self.pop_menu_red = self.pop_menucolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/red32.png'), _('Red'))
+        self.pop_menu_red.setToolTip(_("Colour the selected object(s) red."))
 
         self.pop_menu_blue = self.pop_menucolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/blue32.png'), _('Blue'))
+        self.pop_menu_blue.setToolTip(_("Colour the selected object(s) blue."))
 
         self.pop_menu_yellow = self.pop_menucolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/yellow32.png'), _('Yellow'))
+        self.pop_menu_yellow.setToolTip(_("Colour the selected object(s) yellow."))
 
         self.pop_menu_green = self.pop_menucolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/green32.png'), _('Green'))
+        self.pop_menu_green.setToolTip(_("Colour the selected object(s) green."))
 
         self.pop_menu_purple = self.pop_menucolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/violet32.png'), _('Purple'))
+        self.pop_menu_purple.setToolTip(_("Colour the selected object(s) purple."))
 
         self.pop_menu_brown = self.pop_menucolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/brown32.png'), _('Brown'))
+        self.pop_menu_brown.setToolTip(_("Colour the selected object(s) brown."))
 
         self.pop_menu_brown = self.pop_menucolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/indigo32.png'), _('Indigo'))
+        self.pop_menu_brown.setToolTip(_("Colour the selected object(s) indigo."))
 
         self.pop_menu_brown = self.pop_menucolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/white32.png'), _('White'))
+        self.pop_menu_brown.setToolTip(_("Colour the selected object(s) white."))
 
         self.pop_menu_brown = self.pop_menucolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/black32.png'), _('Black'))
+        self.pop_menu_brown.setToolTip(_("Colour the selected object(s) black."))
 
         self.pop_menucolor.addSeparator()
 
         self.pop_menu_custom = self.pop_menucolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/set_color32.png'), _('Custom'))
-        self.pop_menu_custom.setToolTip(_("Pick a custom color for the selected object(s)."))
-        self.pop_menu_custom.setStatusTip(_("Pick a custom color for the selected object(s)."))
+        self.pop_menu_custom.setToolTip(
+            _("Open a colour picker to choose any colour for the selected object(s), beyond "
+              "the preset colours above.")
+        )
+        self.pop_menu_custom.setStatusTip(_("Pick a custom colour for the selection."))
 
         self.pop_menucolor.addSeparator()
 
         self.pop_menu_custom = self.pop_menucolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/set_color32.png'), _('Opacity'))
-        self.pop_menu_custom.setToolTip(_("Set the transparency of the selected object(s)."))
-        self.pop_menu_custom.setStatusTip(_("Set the transparency of the selected object(s)."))
+        self.pop_menu_custom.setToolTip(
+            _("Set how see-through the selected object(s) are. Lower opacity lets you view "
+              "objects or layers sitting underneath.")
+        )
+        self.pop_menu_custom.setStatusTip(_("Set the transparency of the selection."))
 
         self.pop_menu_custom = self.pop_menucolor.addAction(
             QtGui.QIcon(self.app.resource_location + '/set_color32.png'), _('Default'))
-        self.pop_menu_custom.setToolTip(_("Reset the selected object(s) to the default color."))
-        self.pop_menu_custom.setStatusTip(_("Reset the selected object(s) to the default color."))
+        self.pop_menu_custom.setToolTip(
+            _("Reset the selected object(s) back to their standard colour and opacity, "
+              "undoing any custom colour you set.")
+        )
+        self.pop_menu_custom.setStatusTip(_("Reset the selection to the default colour."))
 
         self.popMenu.addSeparator()
 
@@ -2162,78 +2831,129 @@ class MainGUI(QtWidgets.QMainWindow):
         self.g_editor_cmenu.setToolTipsVisible(True)
         self.draw_line = self.g_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/path32.png'), _("Path"))
-        self.draw_line.setToolTip(_("Draw an open path (a line made of segments)."))
-        self.draw_line.setStatusTip(_("Draw an open path (a line made of segments)."))
+        self.draw_line.setToolTip(
+            _("Draw an open path - a line made of straight segments (shortcut: P). Click each "
+              "point; press Enter to finish or Esc to cancel.")
+        )
+        self.draw_line.setStatusTip(_("Draw an open path."))
         self.draw_rect = self.g_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/rectangle32.png'), _("Rectangle"))
-        self.draw_rect.setToolTip(_("Draw a rectangle shape."))
-        self.draw_rect.setStatusTip(_("Draw a rectangle shape."))
+        self.draw_rect.setToolTip(
+            _("Draw a rectangle (shortcut: R). Click one corner, then the opposite corner to "
+              "set its size.")
+        )
+        self.draw_rect.setStatusTip(_("Draw a rectangle."))
         self.g_editor_cmenu.addSeparator()
         self.draw_circle = self.g_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/circle32.png'), _("Circle"))
-        self.draw_circle.setToolTip(_("Draw a circle shape."))
-        self.draw_circle.setStatusTip(_("Draw a circle shape."))
+        self.draw_circle.setToolTip(
+            _("Draw a circle (shortcut: O). Click for the centre, then click again to set "
+              "the radius.")
+        )
+        self.draw_circle.setStatusTip(_("Draw a circle."))
         self.draw_poly = self.g_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/polygon32.png'), _("Polygon"))
-        self.draw_poly.setToolTip(_("Draw a polygon by clicking its corners."))
-        self.draw_poly.setStatusTip(_("Draw a polygon by clicking its corners."))
+        self.draw_poly.setToolTip(
+            _("Draw a closed polygon (shortcut: N). Click each corner; press Enter to close "
+              "the shape or Esc to cancel.")
+        )
+        self.draw_poly.setStatusTip(_("Draw a polygon."))
         self.draw_arc = self.g_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/arc32.png'), _("Arc"))
-        self.draw_arc.setToolTip(_("Draw an arc shape."))
-        self.draw_arc.setStatusTip(_("Draw an arc shape."))
+        self.draw_arc.setToolTip(
+            _("Draw an arc, a curved segment of a circle (shortcut: A). Click the points "
+              "that define the curve.")
+        )
+        self.draw_arc.setStatusTip(_("Draw an arc."))
         self.g_editor_cmenu.addSeparator()
 
         self.draw_text = self.g_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/text32.png'), _("Text"))
-        self.draw_text.setToolTip(_("Add a text shape."))
+        self.draw_text.setToolTip(
+            _("Add text as a shape (shortcut: T). Type your text and choose a font, then "
+              "click to place it. The letters become millable geometry.")
+        )
         self.draw_text.setStatusTip(_("Add a text shape."))
         self.draw_simplification = self.g_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/simplify32.png'), _("Simplification"))
-        self.draw_simplification.setToolTip(_("Reduce the number of points in the selected shape(s)."))
-        self.draw_simplification.setStatusTip(_("Reduce the number of points in the selected shape(s)."))
+        self.draw_simplification.setToolTip(
+            _("Reduce the number of points in the selected shape(s) while keeping their form. "
+              "Makes the geometry lighter; a larger tolerance removes more points.")
+        )
+        self.draw_simplification.setStatusTip(_("Reduce the number of points in the selection."))
         self.draw_buffer = self.g_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/buffer32.png'), _("Buffer"))
-        self.draw_buffer.setToolTip(_("Grow or shrink the selected shape(s) by a set distance."))
-        self.draw_buffer.setStatusTip(_("Grow or shrink the selected shape(s) by a set distance."))
+        self.draw_buffer.setToolTip(
+            _("Grow or shrink the selected shape(s) by a distance you enter. A positive value "
+              "expands the outline, a negative value shrinks it.")
+        )
+        self.draw_buffer.setStatusTip(_("Grow or shrink the selected shape(s)."))
         self.draw_paint = self.g_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/paint32.png'), _("Paint"))
-        self.draw_paint.setToolTip(_("Fill the inside of the selected shape(s) with tool paths."))
-        self.draw_paint.setStatusTip(_("Fill the inside of the selected shape(s) with tool paths."))
+        self.draw_paint.setToolTip(
+            _("Fill the inside of the selected shape(s) with closely spaced tool paths "
+              "(shortcut: I), clearing the whole area like a pocket.")
+        )
+        self.draw_paint.setStatusTip(_("Fill the inside of the selection with tool paths."))
         self.draw_eraser = self.g_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/eraser26.png'), _("Eraser"))
-        self.draw_eraser.setToolTip(_("Erase part of the selected shape(s)."))
+        self.draw_eraser.setToolTip(
+            _("Erase part of a shape by drawing over it. Anything the eraser covers is "
+              "removed from the geometry.")
+        )
         self.draw_eraser.setStatusTip(_("Erase part of the selected shape(s)."))
         self.g_editor_cmenu.addSeparator()
 
         self.draw_union = self.g_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/union32.png'), _("Union"))
-        self.draw_union.setToolTip(_("Merge the selected shapes into one."))
+        self.draw_union.setToolTip(
+            _("Combine the selected shapes into one, merging overlapping areas (shortcut: U). "
+              "Select two or more shapes first.")
+        )
         self.draw_union.setStatusTip(_("Merge the selected shapes into one."))
         self.draw_intersect = self.g_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/intersection32.png'), _("Intersection"))
-        self.draw_intersect.setToolTip(_("Keep only the area where the selected shapes overlap."))
-        self.draw_intersect.setStatusTip(_("Keep only the area where the selected shapes overlap."))
+        self.draw_intersect.setToolTip(
+            _("Keep only the area where the selected shapes overlap, discarding the rest "
+              "(shortcut: E). Select two or more overlapping shapes first.")
+        )
+        self.draw_intersect.setStatusTip(_("Keep only the overlapping area."))
         self.draw_substract = self.g_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/subtract32.png'), _("Subtraction"))
-        self.draw_substract.setToolTip(_("Subtract the other shapes from the first selected shape."))
-        self.draw_substract.setStatusTip(_("Subtract the other shapes from the first selected shape."))
+        self.draw_substract.setToolTip(
+            _("Cut the other selected shapes out of the first one you selected (shortcut: S). "
+              "Select the target shape first, then the shapes to remove.")
+        )
+        self.draw_substract.setStatusTip(_("Subtract the other shapes from the first."))
         self.draw_substract_alt = self.g_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/subtract_alt32.png'), _("Alt Subtraction"))
-        self.draw_substract_alt.setToolTip(_("Subtract the first selected shape from the other shapes."))
-        self.draw_substract_alt.setStatusTip(_("Subtract the first selected shape from the other shapes."))
+        self.draw_substract_alt.setToolTip(
+            _("Cut the first selected shape out of all the others, keeping the first shape as "
+              "the cutter. The opposite direction to ordinary Subtraction.")
+        )
+        self.draw_substract_alt.setStatusTip(_("Subtract the first shape from the others."))
         self.draw_cut = self.g_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/cutpath32.png'), _("Cut"))
-        self.draw_cut.setToolTip(_("Cut a shape using another shape as the cutter."))
-        self.draw_cut.setStatusTip(_("Cut a shape using another shape as the cutter."))
+        self.draw_cut.setToolTip(
+            _("Split a path where another shape crosses it, using that shape as a cutter "
+              "(shortcut: X). Handy for breaking a line into pieces.")
+        )
+        self.draw_cut.setStatusTip(_("Cut a path using another shape."))
         self.draw_transform = self.g_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/transform.png'), _("Transform"))
-        self.draw_transform.setToolTip(_("Rotate, skew, scale, mirror or offset the selected shape(s)."))
-        self.draw_transform.setStatusTip(_("Rotate, skew, scale, mirror or offset the selected shape(s)."))
+        self.draw_transform.setToolTip(
+            _("Open the Transform panel for the selected shape(s) (Alt+R), where you can "
+              "rotate, skew, scale, mirror or offset them by precise amounts.")
+        )
+        self.draw_transform.setStatusTip(_("Transform the selected shape(s)."))
 
         self.g_editor_cmenu.addSeparator()
         self.draw_move = self.g_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/move32.png'), _("Move"))
-        self.draw_move.setToolTip(_("Move the selected shape(s)."))
+        self.draw_move.setToolTip(
+            _("Move the selected shape(s) (shortcut: M). Click a reference point to pick them "
+              "up, then click again where you want them dropped.")
+        )
         self.draw_move.setStatusTip(_("Move the selected shape(s)."))
 
         self.grb_editor_cmenu = self.popMenu.addMenu(
@@ -2241,120 +2961,195 @@ class MainGUI(QtWidgets.QMainWindow):
         self.grb_editor_cmenu.setToolTipsVisible(True)
         self.grb_draw_pad = self.grb_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/aperture32.png'), _("Pad"))
-        self.grb_draw_pad.setToolTip(_("Add a single pad using the active aperture."))
-        self.grb_draw_pad.setStatusTip(_("Add a single pad using the active aperture."))
+        self.grb_draw_pad.setToolTip(
+            _("Add one copper pad using the currently selected aperture (shortcut: P). Click "
+              "on the canvas to place it.")
+        )
+        self.grb_draw_pad.setStatusTip(_("Add a single pad."))
         self.grb_draw_pad_array = self.grb_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/padarray32.png'), _("Pad Array"))
-        self.grb_draw_pad_array.setToolTip(_("Add a regular array (grid or circle) of pads."))
-        self.grb_draw_pad_array.setStatusTip(_("Add a regular array (grid or circle) of pads."))
+        self.grb_draw_pad_array.setToolTip(
+            _("Add many pads at once in a regular pattern (shortcut: A). Choose a grid or "
+              "circular layout and the spacing - ideal for connector footprints.")
+        )
+        self.grb_draw_pad_array.setStatusTip(_("Add an array of pads."))
         self.grb_editor_cmenu.addSeparator()
 
         self.grb_draw_track = self.grb_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/track32.png'), _("Track"))
-        self.grb_draw_track.setToolTip(_("Draw a copper track (trace)."))
-        self.grb_draw_track.setStatusTip(_("Draw a copper track (trace)."))
+        self.grb_draw_track.setToolTip(
+            _("Draw a copper track that carries a signal between pads (shortcut: T). Click "
+              "each point along the route; its width comes from the active aperture.")
+        )
+        self.grb_draw_track.setStatusTip(_("Draw a copper track."))
         self.grb_draw_region = self.grb_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/polygon32.png'), _("Region"))
-        self.grb_draw_region.setToolTip(_("Draw a filled copper region (polygon)."))
-        self.grb_draw_region.setStatusTip(_("Draw a filled copper region (polygon)."))
+        self.grb_draw_region.setToolTip(
+            _("Draw a filled copper region by clicking its corners (shortcut: N). The whole "
+              "enclosed area becomes solid copper - used for ground pours.")
+        )
+        self.grb_draw_region.setStatusTip(_("Draw a filled copper region."))
         self.grb_draw_poligonize = self.grb_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/poligonize32.png'), _("Poligonize"))
-        self.grb_draw_poligonize.setToolTip(_("Turn the selected geometry into a filled polygon."))
-        self.grb_draw_poligonize.setStatusTip(_("Turn the selected geometry into a filled polygon."))
+        self.grb_draw_poligonize.setToolTip(
+            _("Turn the selected geometry into a single filled polygon (Alt+N). Use it to "
+              "convert lines that enclose an area into one solid copper region.")
+        )
+        self.grb_draw_poligonize.setStatusTip(_("Convert the selection into a filled polygon."))
         self.grb_draw_semidisc = self.grb_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/semidisc32.png'), _("SemiDisc"))
-        self.grb_draw_semidisc.setToolTip(_("Draw a semi-disc (half circle) shape."))
-        self.grb_draw_semidisc.setStatusTip(_("Draw a semi-disc (half circle) shape."))
+        self.grb_draw_semidisc.setToolTip(
+            _("Draw a semi-disc, a solid half-circle of copper (shortcut: E). Click to set "
+              "its centre and edge points.")
+        )
+        self.grb_draw_semidisc.setStatusTip(_("Draw a semi-disc (half circle)."))
         self.grb_draw_disc = self.grb_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/disc32.png'), _("Disc"))
-        self.grb_draw_disc.setToolTip(_("Draw a filled disc (solid circle) shape."))
-        self.grb_draw_disc.setStatusTip(_("Draw a filled disc (solid circle) shape."))
+        self.grb_draw_disc.setToolTip(
+            _("Draw a disc, a solid filled circle of copper (shortcut: D). Click for the "
+              "centre, then click again to set the radius.")
+        )
+        self.grb_draw_disc.setStatusTip(_("Draw a filled disc (solid circle)."))
         self.grb_editor_cmenu.addSeparator()
 
         self.grb_draw_buffer = self.grb_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/buffer32.png'), _("Buffer"))
-        self.grb_draw_buffer.setToolTip(_("Grow or shrink the selected geometry by a set distance."))
-        self.grb_draw_buffer.setStatusTip(_("Grow or shrink the selected geometry by a set distance."))
+        self.grb_draw_buffer.setToolTip(
+            _("Grow or shrink the selected copper by a distance you enter. A positive value "
+              "widens the copper, a negative value narrows it.")
+        )
+        self.grb_draw_buffer.setStatusTip(_("Grow or shrink the selected copper."))
         self.grb_draw_scale = self.grb_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/scale32.png'), _("Scale"))
-        self.grb_draw_scale.setToolTip(_("Resize the selected geometry by a scale factor."))
-        self.grb_draw_scale.setStatusTip(_("Resize the selected geometry by a scale factor."))
+        self.grb_draw_scale.setToolTip(
+            _("Resize the selected copper geometry by a scale factor you enter. A factor of 2 "
+              "doubles the size, 0.5 halves it.")
+        )
+        self.grb_draw_scale.setStatusTip(_("Resize the selection by a scale factor."))
         self.grb_draw_markarea = self.grb_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/markarea32.png'), _("Mark Area"))
-        self.grb_draw_markarea.setToolTip(_("Highlight apertures whose area falls in a chosen range."))
-        self.grb_draw_markarea.setStatusTip(_("Highlight apertures whose area falls in a chosen range."))
+        self.grb_draw_markarea.setToolTip(
+            _("Highlight copper features whose area falls within a range you set. Handy for "
+              "finding all pads or shapes of a certain size.")
+        )
+        self.grb_draw_markarea.setStatusTip(_("Highlight features within an area range."))
         self.grb_draw_eraser = self.grb_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/eraser26.png'), _("Eraser"))
-        self.grb_draw_eraser.setToolTip(_("Erase copper from the selected geometry."))
-        self.grb_draw_eraser.setStatusTip(_("Erase copper from the selected geometry."))
+        self.grb_draw_eraser.setToolTip(
+            _("Erase copper by drawing over it (Ctrl+E). Anything the eraser covers is "
+              "removed - useful for cutting gaps by hand.")
+        )
+        self.grb_draw_eraser.setStatusTip(_("Erase copper from the geometry."))
         self.grb_editor_cmenu.addSeparator()
 
         self.grb_draw_transformations = self.grb_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/transform.png'), _("Transform"))
-        self.grb_draw_transformations.setToolTip(_("Rotate, skew, scale, mirror or offset the selected geometry."))
-        self.grb_draw_transformations.setStatusTip(_("Rotate, skew, scale, mirror or offset the selected geometry."))
+        self.grb_draw_transformations.setToolTip(
+            _("Open the Transform panel for the selected copper geometry (Alt+R), where you "
+              "can rotate, skew, scale, mirror or offset it by precise amounts.")
+        )
+        self.grb_draw_transformations.setStatusTip(_("Transform the selected geometry."))
 
         self.e_editor_cmenu = self.popMenu.addMenu(
             QtGui.QIcon(self.app.resource_location + '/drill32.png'), _("Exc Editor"))
         self.e_editor_cmenu.setToolTipsVisible(True)
         self.drill = self.e_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/open_excellon32.png'), _("Drill"))
-        self.drill.setToolTip(_("Add a single drill hole."))
+        self.drill.setToolTip(
+            _("Add one drill hole (shortcut: D). Click to place it; it uses the diameter of "
+              "the currently selected tool.")
+        )
         self.drill.setStatusTip(_("Add a single drill hole."))
         self.drill_array = self.e_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/addarray32.png'), _("Drill Array"))
-        self.drill_array.setToolTip(_("Add a regular array (grid or circle) of drill holes."))
-        self.drill_array.setStatusTip(_("Add a regular array (grid or circle) of drill holes."))
+        self.drill_array.setToolTip(
+            _("Add many drill holes at once in a regular pattern (shortcut: A). Choose a grid "
+              "or circular layout and the spacing - ideal for mounting-hole patterns.")
+        )
+        self.drill_array.setStatusTip(_("Add an array of drill holes."))
         self.e_editor_cmenu.addSeparator()
         self.slot = self.e_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/slot26.png'), _("Slot"))
-        self.slot.setToolTip(_("Add a single slot."))
+        self.slot.setToolTip(
+            _("Add one slot, an elongated hole (shortcut: W). Click to set its position and "
+              "draw its length; its width comes from the selected tool.")
+        )
         self.slot.setStatusTip(_("Add a single slot."))
         self.slot_array = self.e_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/slot_array26.png'), _("Slot Array"))
-        self.slot_array.setToolTip(_("Add a regular array (grid or circle) of slots."))
-        self.slot_array.setStatusTip(_("Add a regular array (grid or circle) of slots."))
+        self.slot_array.setToolTip(
+            _("Add many slots at once in a regular pattern (shortcut: Q). Choose a grid or "
+              "circular layout and the spacing, then place the whole set.")
+        )
+        self.slot_array.setStatusTip(_("Add an array of slots."))
         self.e_editor_cmenu.addSeparator()
         self.drill_resize = self.e_editor_cmenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/resize16.png'), _("Resize Drill"))
-        self.drill_resize.setToolTip(_("Change the diameter of the selected drill(s)."))
+        self.drill_resize.setToolTip(
+            _("Change the diameter of the selected drill(s) (shortcut: R). Select the holes "
+              "first, then enter the new size.")
+        )
         self.drill_resize.setStatusTip(_("Change the diameter of the selected drill(s)."))
 
         self.popMenu.addSeparator()
         self.popmenu_copy = self.popMenu.addAction(QtGui.QIcon(self.app.resource_location + '/copy32.png'), _("Copy"))
-        self.popmenu_copy.setToolTip(_("Make a copy of the selected object(s)."))
-        self.popmenu_copy.setStatusTip(_("Make a copy of the selected object(s)."))
+        self.popmenu_copy.setToolTip(
+            _("Make a duplicate of the selected object(s) (Ctrl+C). The copy is added to the "
+              "project with a new name.")
+        )
+        self.popmenu_copy.setStatusTip(_("Duplicate the selected object(s)."))
         self.popmenu_delete = self.popMenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/delete32.png'), _("Delete"))
-        self.popmenu_delete.setToolTip(_("Delete the selected object(s)."))
+        self.popmenu_delete.setToolTip(
+            _("Remove the selected object(s) from the project (Del). This cannot be undone; "
+              "the files on disk are not affected.")
+        )
         self.popmenu_delete.setStatusTip(_("Delete the selected object(s)."))
         self.popmenu_edit = self.popMenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/edit32.png'), _("Edit"))
-        self.popmenu_edit.setToolTip(_("Open the selected object in its interactive editor."))
-        self.popmenu_edit.setStatusTip(_("Open the selected object in its interactive editor."))
+        self.popmenu_edit.setToolTip(
+            _("Open the selected object in its interactive editor so you can change it by "
+              "hand (shortcut: E). The editor that opens matches the object type.")
+        )
+        self.popmenu_edit.setStatusTip(_("Edit the selected object."))
         self.popmenu_save = self.popMenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/power16.png'), _("Exit Editor"))
-        self.popmenu_save.setToolTip(_("Leave the editor and apply the changes to the object."))
-        self.popmenu_save.setStatusTip(_("Leave the editor and apply the changes to the object."))
+        self.popmenu_save.setToolTip(
+            _("Leave the editor and save your changes back into the object (Ctrl+S). Only "
+              "available while you are editing.")
+        )
+        self.popmenu_save.setStatusTip(_("Exit the editor and apply the changes."))
         self.popmenu_save.setVisible(False)
         self.popMenu.addSeparator()
 
         self.popmenu_numeric_move = self.popMenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/move32_bis.png'), _("Num Move"))
-        self.popmenu_numeric_move.setToolTip(_("Move the selected object(s) by typing exact X, Y offsets."))
-        self.popmenu_numeric_move.setStatusTip(_("Move the selected object(s) by typing exact X, Y offsets."))
+        self.popmenu_numeric_move.setToolTip(
+            _("Move the selected object(s) by an exact amount you type in, instead of "
+              "dragging. Use this for precise, repeatable positioning.")
+        )
+        self.popmenu_numeric_move.setStatusTip(_("Move the selection by typed X, Y offsets."))
         self.popmenu_move2origin = self.popMenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/move2origin32.png'), _("Move2Origin"))
-        self.popmenu_move2origin.setToolTip(_("Move the selected object(s) so they sit at the origin (0, 0)."))
-        self.popmenu_move2origin.setStatusTip(_("Move the selected object(s) so they sit at the origin (0, 0)."))
+        self.popmenu_move2origin.setToolTip(
+            _("Shift the selected object(s) so their bottom-left corner sits at the origin "
+              "(0, 0) (Shift+O). Handy for lining work up with the machine's zero.")
+        )
+        self.popmenu_move2origin.setStatusTip(_("Move the selection to the origin (0, 0)."))
         self.popmenu_move = self.popMenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/move32.png'), _("Move"))
-        self.popmenu_move.setToolTip(_("Move the selected object(s) by dragging."))
-        self.popmenu_move.setStatusTip(_("Move the selected object(s) by dragging."))
+        self.popmenu_move.setToolTip(
+            _("Move the selected object(s) on the canvas (shortcut: M). Click a reference "
+              "point to pick them up, then click again where you want them dropped.")
+        )
+        self.popmenu_move.setStatusTip(_("Move the selected object(s)."))
         self.popmenu_properties = self.popMenu.addAction(
             QtGui.QIcon(self.app.resource_location + '/properties32.png'), _("Properties"))
-        self.popmenu_properties.setToolTip(_("Show detailed properties of the selected object."))
-        self.popmenu_properties.setStatusTip(_("Show detailed properties of the selected object."))
+        self.popmenu_properties.setToolTip(
+            _("Show detailed information about the selected object in the Properties tab - "
+              "its size, area, tools and estimated machining time.")
+        )
+        self.popmenu_properties.setStatusTip(_("Show properties of the selected object."))
 
         # ########################################################################
         # ########################## INFO BAR # ##################################
@@ -2438,8 +3233,12 @@ class MainGUI(QtWidgets.QMainWindow):
         # ########################################################################
         self.lock_action = QtGui.QAction()
         self.lock_action.setText(_("Lock Toolbars"))
-        self.lock_action.setToolTip(_("Lock all toolbars in place so they cannot be moved."))
-        self.lock_action.setStatusTip(_("Lock all toolbars in place so they cannot be moved."))
+        self.lock_action.setToolTip(
+            _("Lock all the toolbars in place so they can no longer be dragged around. Turn "
+              "this on once you are happy with the layout to avoid moving toolbars by "
+              "accident.")
+        )
+        self.lock_action.setStatusTip(_("Lock all toolbars in place."))
         self.lock_action.setCheckable(True)
 
         # ########################################################################
@@ -2447,7 +3246,10 @@ class MainGUI(QtWidgets.QMainWindow):
         # ########################################################################
         self.show_text_action = QtGui.QAction()
         self.show_text_action.setText(_("Show Text"))
-        self.show_text_action.setToolTip(_("Show text labels next to the toolbar icons."))
+        self.show_text_action.setToolTip(
+            _("Show a text label beside each toolbar icon, instead of icons only. Helpful "
+              "while you are still learning what each button does.")
+        )
         self.show_text_action.setStatusTip(_("Show text labels next to the toolbar icons."))
         self.show_text_action.setCheckable(True)
 
@@ -2799,23 +3601,39 @@ class MainGUI(QtWidgets.QMainWindow):
         # ########################################################################
         self.file_open_gerber_btn = self.toolbarfile.addAction(
             QtGui.QIcon(self.app.resource_location + '/open_gerber32.png'), _("Gerber"))
-        self.file_open_gerber_btn.setToolTip(_("Open a Gerber file."))
+        self.file_open_gerber_btn.setToolTip(
+            _("Open a Gerber file (copper, solder mask or silkscreen) as a new object "
+              "(Ctrl+G). The same as File -> Open -> Open Gerber.")
+        )
         self.file_open_excellon_btn = self.toolbarfile.addAction(
             QtGui.QIcon(self.app.resource_location + '/open_excellon32.png'), _("Excellon"))
-        self.file_open_excellon_btn.setToolTip(_("Open a Excellon file."))
+        self.file_open_excellon_btn.setToolTip(
+            _("Open an Excellon drill file as a new object (Ctrl+E). The same as File -> "
+              "Open -> Open Excellon.")
+        )
         self.toolbarfile.addSeparator()
         self.file_open_btn = self.toolbarfile.addAction(
             QtGui.QIcon(self.app.resource_location + '/folder32.png'), _("Open"))
-        self.file_open_btn.setToolTip(_("Open a project."))
+        self.file_open_btn.setToolTip(
+            _("Open a saved project file (.FlatPrj), restoring all its objects and settings "
+              "(Ctrl+O). Replaces the current work, so save first if needed.")
+        )
         self.file_save_btn = self.toolbarfile.addAction(
             QtGui.QIcon(self.app.resource_location + '/save_as.png'), _("Save"))
-        self.file_save_btn.setToolTip(_("Save the current project."))
+        self.file_save_btn.setToolTip(
+            _("Save the current project to its file (Ctrl+S). If it has no file yet you will "
+              "be asked for a name.")
+        )
 
         # ########################################################################
         # ######################### Edit Toolbar #################################
         # ########################################################################
         self.editor_start_btn = self.toolbaredit.addAction(
             QtGui.QIcon(self.app.resource_location + '/edit_file32.png'), _("Editor"))
+        self.editor_start_btn.setToolTip(
+            _("Open the selected object in its interactive editor so you can change it by "
+              "hand (shortcut: E). The editor that opens matches the object type.")
+        )
         self.editor_exit_btn = QtWidgets.QToolButton()
 
         # https://www.w3.org/TR/SVG11/types.html#ColorKeywords
@@ -2827,26 +3645,43 @@ class MainGUI(QtWidgets.QMainWindow):
                                           }
                                           """)
         self.editor_exit_btn.setIcon(QtGui.QIcon(self.app.resource_location + '/power16.png'))
-        self.editor_exit_btn.setToolTip(_("Exit from Editor."))
+        self.editor_exit_btn.setToolTip(
+            _("Leave the current editor and apply your changes to the object (Ctrl+S). This "
+              "button only appears while you are editing.")
+        )
         # in order to hide it we hide the returned action
         self.editor_exit_btn_ret_action = self.toolbaredit.addWidget(self.editor_exit_btn)
 
         self.copy_btn = self.toolbaredit.addAction(
             QtGui.QIcon(self.app.resource_location + '/copy_file32.png'), _("Copy"))
-        self.copy_btn.setToolTip(_("Copy a selection of objects."))
+        self.copy_btn.setToolTip(
+            _("Make a duplicate of the selected object(s) (Ctrl+C). The copies are added to "
+              "the project with new names.")
+        )
         self.delete_btn = self.toolbaredit.addAction(
             QtGui.QIcon(self.app.resource_location + '/trash32.png'), _("Delete"))
-        self.delete_btn.setToolTip(_("Delete a selection of objects."))
+        self.delete_btn.setToolTip(
+            _("Remove the selected object(s) from the project (Del). This cannot be undone; "
+              "the files on disk are not affected.")
+        )
         self.toolbaredit.addSeparator()
         self.distance_btn = self.toolbaredit.addAction(
             QtGui.QIcon(self.app.resource_location + '/distance32.png'), _("Distance"))
-        self.distance_btn.setToolTip(_("Measure a distance between two or more points."))
+        self.distance_btn.setToolTip(
+            _("Measure the distance between two points on the canvas (Ctrl+M). Click the "
+              "start point, then the end point, to read the straight-line distance plus the "
+              "X and Y gaps and angle.")
+        )
         # self.distance_min_btn = self.toolbaredit.addAction(
         #     QtGui.QIcon(self.app.resource_location + '/distance_min32.png'), _("Min Distance"))
         # self.distance_min_btn.setToolTip(_("Measure the minimum distance between two objects."))
         self.origin_btn = self.toolbaredit.addAction(
             QtGui.QIcon(self.app.resource_location + '/origin32.png'), _('Set Origin'))
-        self.origin_btn.setToolTip(_("Set an origin to a custom location."))
+        self.origin_btn.setToolTip(
+            _("Set where the (0, 0) point of the work is by clicking a spot on the canvas "
+              "(shortcut: O). Everything is measured from this origin, which usually matches "
+              "the machine's zero.")
+        )
         # self.move2origin_btn = self.toolbaredit.addAction(
         #     QtGui.QIcon(self.app.resource_location + '/move2origin32.png'), _('To Orig.'))
         # self.move2origin_btn.setToolTip(_("Move selected objects to the origin."))
@@ -2856,36 +3691,77 @@ class MainGUI(QtWidgets.QMainWindow):
 
         self.jmp_btn = self.toolbaredit.addAction(
             QtGui.QIcon(self.app.resource_location + '/jump_to32.png'), _('Jump to'))
-        self.jmp_btn.setToolTip(_("Move the mouse cursor to a defined position and center into view."))
+        self.jmp_btn.setToolTip(
+            _("Jump the view to X, Y coordinates that you type in, centring them on screen "
+              "and moving the cursor there (shortcut: J). Handy on a large board.")
+        )
         self.locate_btn = self.toolbaredit.addAction(
             QtGui.QIcon(self.app.resource_location + '/locate32.png'), _('Locate'))
-        self.locate_btn.setToolTip(_("Locate a predefined position on a selected object."))
+        self.locate_btn.setToolTip(
+            _("Jump the view to a chosen reference point of the selected object, such as a "
+              "corner or its centre (Shift+J). Useful for finding a known feature quickly.")
+        )
 
         # ########################################################################
         # ########################## View Toolbar# ###############################
         # ########################################################################
         self.replot_btn = self.toolbarview.addAction(
             QtGui.QIcon(self.app.resource_location + '/replot32.png'), _("Replot"))
+        self.replot_btn.setToolTip(
+            _("Redraw every object on the canvas from scratch (F5). Use this if the display "
+              "looks wrong or out of date.")
+        )
         self.clear_plot_btn = self.toolbarview.addAction(
             QtGui.QIcon(self.app.resource_location + '/clear_plot32.png'), _("Clear Plot"))
+        self.clear_plot_btn.setToolTip(
+            _("Wipe everything off the canvas display. The objects stay in the project; only "
+              "the drawing is cleared. Use Replot to draw them again.")
+        )
         self.zoom_in_btn = self.toolbarview.addAction(
             QtGui.QIcon(self.app.resource_location + '/zoom_in32.png'), _("Zoom In"))
+        self.zoom_in_btn.setToolTip(
+            _("Zoom the view in to see finer detail (shortcut: =). You can also scroll the "
+              "mouse wheel over the canvas.")
+        )
         self.zoom_out_btn = self.toolbarview.addAction(
             QtGui.QIcon(self.app.resource_location + '/zoom_out32.png'), _("Zoom Out"))
+        self.zoom_out_btn.setToolTip(
+            _("Zoom the view out to see more at once (shortcut: -). You can also scroll the "
+              "mouse wheel over the canvas.")
+        )
         self.zoom_fit_btn = self.toolbarview.addAction(
             QtGui.QIcon(self.app.resource_location + '/zoom_fit32.png'), _("Zoom Fit"))
+        self.zoom_fit_btn.setToolTip(
+            _("Zoom and centre so all visible objects fit neatly on screen (shortcut: V). "
+              "The quickest way to get your bearings.")
+        )
 
         # ########################################################################
         # ########################## Shell Toolbar# ##############################
         # ########################################################################
         self.shell_btn = self.toolbarshell.addAction(
             QtGui.QIcon(self.app.resource_location + '/shell32.png'), _("Command Line"))
+        self.shell_btn.setToolTip(
+            _("Open the Tcl command-line shell (shortcut: S), where you can type commands to "
+              "control and automate the application. Script output also appears here.")
+        )
         self.new_script_btn = self.toolbarshell.addAction(
             QtGui.QIcon(self.app.resource_location + '/script_new24.png'), '%s ...' % _('New Script'))
+        self.new_script_btn.setToolTip(
+            _("Create a new, empty Tcl script object with a starter template, ready for you "
+              "to write automation commands.")
+        )
         self.open_script_btn = self.toolbarshell.addAction(
             QtGui.QIcon(self.app.resource_location + '/open_script32.png'), '%s ...' % _('Open Script'))
+        self.open_script_btn.setToolTip(
+            _("Open an existing Tcl script file from disk so you can view, edit and run it.")
+        )
         self.run_script_btn = self.toolbarshell.addAction(
             QtGui.QIcon(self.app.resource_location + '/script16.png'), '%s ...' % _('Run Script'))
+        self.run_script_btn.setToolTip(
+            _("Run the currently opened Tcl script (Shift+S), executing its commands in order "
+              "to automate a task. Watch the Tcl shell for output and errors.")
+        )
 
         # #########################################################################
         # ######################### Tools Toolbar #################################

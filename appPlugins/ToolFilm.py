@@ -44,7 +44,7 @@ log = logging.getLogger('base')
 
 
 class Film(AppTool):
-    plugin_tooltip = _("Export a positive or negative film (SVG/PDF/PNG) of an object for plotting.")
+    plugin_tooltip = _("Produces a film/artwork export of an object, as a positive or negative image, for photo-plotting or printing onto transparency. The film can be saved as SVG, PDF or PNG. Select the object (and optional box object for the border), choose positive/negative and the file format, then export the film file.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

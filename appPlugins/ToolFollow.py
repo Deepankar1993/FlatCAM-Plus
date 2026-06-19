@@ -33,7 +33,7 @@ log = logging.getLogger('base')
 
 
 class ToolFollow(AppTool, Gerber):
-    plugin_tooltip = _("Trace the centerlines of a Gerber's tracks for single-line engraving.")
+    plugin_tooltip = _("Creates \"follow\" geometry that traces the centerline of each Gerber track (the path the aperture actually followed) instead of isolating around it. This gives a single-line toolpath that is useful for engraving or following a trace exactly once. Select a Gerber object and run it to produce a Geometry object of the centerlines.")
 
     optimal_found_sig = QtCore.pyqtSignal(float)
 

@@ -29,7 +29,7 @@ log = logging.getLogger('base')
 
 
 class RulesCheck(AppTool):
-    plugin_tooltip = _("Run a design-rules check on the layers and report any violations.")
+    plugin_tooltip = _("Runs a design-rules check (DRC) across the Gerber and Excellon layers, testing things like trace width, clearance, hole-to-hole spacing, drill size, silk-to-pad and ring width. It does not modify the layers, only reports problems. Choose the layers and the rule values, then run the check to get a list of any violations.")
 
     tool_finished = QtCore.pyqtSignal(list)
 

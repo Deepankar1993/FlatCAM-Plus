@@ -66,7 +66,7 @@ log = logging.getLogger('base')
 
 
 class ToolLevelling(AppTool, CNCjob):
-    plugin_tooltip = _("Probe the board height and adjust the G-Code to follow an uneven surface.")
+    plugin_tooltip = _("Performs auto-leveling by probing the board's height on a grid of points and then adjusting the G-Code so the toolpath rises and falls to follow an uneven or non-flat surface. This keeps engraving depth consistent on warped material. Select a CNCJob, generate the probing grid, collect the height data, then apply it to produce height-corrected G-Code.")
     build_al_table_sig = QtCore.pyqtSignal()
 
     def __init__(self, app):

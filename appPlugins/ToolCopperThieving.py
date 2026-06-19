@@ -36,7 +36,7 @@ log = logging.getLogger('base')
 
 
 class ToolCopperThieving(AppTool):
-    plugin_tooltip = _("Add filler copper to empty board areas to balance copper density.")
+    plugin_tooltip = _("Adds filler copper (a solid fill or a dots/squares/lines pattern) into the empty areas of the board so the copper density is balanced for more even etching and plating. It can also build a robber bar and a pattern-plating mask. Select a Gerber object, choose the fill pattern and clearance, then run it to add the thieving copper into the object.")
     work_finished = QtCore.pyqtSignal()
 
     def __init__(self, app):

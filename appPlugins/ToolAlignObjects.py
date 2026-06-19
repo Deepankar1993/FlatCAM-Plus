@@ -29,7 +29,7 @@ log = logging.getLogger('base')
 class AlignObjects(AppTool):
 
     pluginName = _("Align Objects")
-    plugin_tooltip = _("Align one object to another by picking matching reference points.")
+    plugin_tooltip = _("Aligns one object onto another by letting you click matching reference points on each, for example to overlay a top and a bottom layer. From those picked points it computes the translation and rotation needed and applies it. Select the moving object and the target object, click the matching points, and the moving object is repositioned to match.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

@@ -38,7 +38,7 @@ log = logging.getLogger('base')
 
 
 class NonCopperClear(AppTool, Gerber):
-    plugin_tooltip = _("Clear all the unwanted copper from the empty areas of a Gerber.")
+    plugin_tooltip = _("Non-Copper Clearing removes all the leftover copper from the empty (non-track) areas of a Gerber, i.e. the copper-pour regions, so only the wanted tracks and pads remain. It fills those empty areas with overlapping passes of one or more tools. Select a Gerber object, choose the clearing tools and overlap, then generate the Geometry object that you can turn into G-Code.")
 
     optimal_found_sig = QtCore.pyqtSignal(float)
 

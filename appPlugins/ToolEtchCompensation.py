@@ -29,7 +29,7 @@ log = logging.getLogger('base')
 
 
 class ToolEtchCompensation(AppTool):
-    plugin_tooltip = _("Grow or shrink Gerber copper to compensate for chemical etching undercut.")
+    plugin_tooltip = _("Compensates a Gerber's copper features for the sideways undercut that happens during chemical etching, so the etched result matches the dimensions you actually want. It grows or shrinks the geometry based on the copper thickness and the etchant's lateral factor. Select a Gerber object, enter the copper thickness and etchant, then apply the compensation to update the object.")
 
     def __init__(self, app):
         self.app = app

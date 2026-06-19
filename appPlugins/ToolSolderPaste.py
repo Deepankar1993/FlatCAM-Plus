@@ -36,7 +36,7 @@ if '_' not in builtins.__dict__:
 
 
 class SolderPaste(AppTool):
-    plugin_tooltip = _("Generate dispensing toolpaths to apply solder paste to SMD pads.")
+    plugin_tooltip = _("Generates dispensing toolpaths and G-Code for laying solder paste onto SMD pads, driving a paste dispenser instead of a cutting tool. It is used together with a stencil-free paste workflow on surface-mount boards. Select a Gerber solderpaste object, set the nozzle tools and dispense parameters, then generate the CNCJob for the dispenser.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)
