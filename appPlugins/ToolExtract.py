@@ -27,6 +27,7 @@ log = logging.getLogger('base')
 
 
 class ToolExtract(AppTool):
+    plugin_tooltip = _("Extract drill holes and/or soldermask geometry from a Gerber object.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

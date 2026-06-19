@@ -32,6 +32,7 @@ log = logging.getLogger('base')
 
 
 class Distance(AppTool):
+    plugin_tooltip = _("Ruler that measures the distance, dx, dy and angle between two clicked points.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

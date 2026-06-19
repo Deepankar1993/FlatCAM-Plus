@@ -38,6 +38,7 @@ log = logging.getLogger('base')
 
 
 class NonCopperClear(AppTool, Gerber):
+    plugin_tooltip = _("Clear all the unwanted copper from the empty areas of a Gerber.")
 
     optimal_found_sig = QtCore.pyqtSignal(float)
 

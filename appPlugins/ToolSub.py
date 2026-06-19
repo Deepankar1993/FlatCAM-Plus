@@ -29,6 +29,7 @@ log = logging.getLogger('base')
 
 
 class ToolSub(AppTool):
+    plugin_tooltip = _("Subtract one object's geometry from another to produce a difference object.")
 
     job_finished = QtCore.pyqtSignal(bool)
 

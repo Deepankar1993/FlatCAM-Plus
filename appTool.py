@@ -21,6 +21,7 @@ if '_' not in builtins.__dict__:
 class AppTool(QtWidgets.QWidget):
 
     pluginName = "FlatCAM Generic Tool"
+    plugin_tooltip = ""
 
     def __init__(self, app, parent=None):
         """
@@ -70,8 +71,10 @@ class AppTool(QtWidgets.QWidget):
         else:
             self.menuAction.setText(self.pluginName + '\t%s' % shortcut)
 
-        # add a ToolTip to the new Action
-        # self.menuAction.setToolTip(self.toolTip) # currently not available
+        # add a ToolTip to the new Action; fall back to the plugin name when no description is provided
+        tip = getattr(self, 'plugin_tooltip', '') or self.pluginName
+        self.menuAction.setToolTip(tip)
+        self.menuAction.setStatusTip(tip)
 
         # insert the action in the position specified by 'before' and 'pos' kwargs
         pos.insertAction(before, self.menuAction)

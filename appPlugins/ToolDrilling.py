@@ -36,6 +36,7 @@ log = logging.getLogger('base')
 
 
 class ToolDrilling(AppTool, Excellon):
+    plugin_tooltip = _("Generate drilling G-Code from an Excellon object to drill the holes.")
     build_ui_sig = QtCore.pyqtSignal()
 
     def __init__(self, app):

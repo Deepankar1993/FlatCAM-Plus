@@ -8,6 +8,7 @@
 from PyQt6 import QtCore, QtGui
 
 import logging
+import time
 from appGUI.VisPyCanvas import VisPyCanvas, Color
 from appGUI.VisPyVisuals import ShapeGroup, ShapeCollection, TextCollection, TextGroup, Cursor
 from vispy.scene.visuals import InfiniteLine, Line, Rectangle, Text
@@ -49,6 +50,19 @@ class PlotCanvas(QtCore.QObject, VisPyCanvas):
         self.unfreeze()
 
         self.fcapp = fcapp
+
+        # ---- Big-cursor (crosshair) repaint throttle ----
+        # InfiniteLineVisual.set_data() only flips internal dirty flags; it does NOT schedule a
+        # canvas redraw, so the crosshair is repainted by an explicit self.view.scene.update() in
+        # on_mouse_position(). That call requests a FULL-scene repaint, whose cost scales with the
+        # loaded geometry, and it used to fire on every single mouse-position event. We coalesce it
+        # to ~60 Hz (mirroring the 15 ms camera throttle in VisPyCanvas.Camera) while a trailing
+        # single-shot timer guarantees the final position is always drawn once the mouse settles.
+        self._cursor_last_update_t = 0.0
+        self._cursor_update_interval = 0.015  # seconds (~66 Hz)
+        self._cursor_flush_timer = QtCore.QTimer(self)
+        self._cursor_flush_timer.setSingleShot(True)
+        self._cursor_flush_timer.timeout.connect(self._flush_cursor_update)
 
         settings = QtCore.QSettings("Open Source", "FlatCAM_EVO")
         if settings.contains("theme"):
@@ -589,8 +603,29 @@ class PlotCanvas(QtCore.QObject, VisPyCanvas):
         else:
             color = self.line_color
 
+        # set_data() is cheap (only flips dirty flags), so always refresh the buffers with the
+        # latest position. The actual full-scene repaint via scene.update() is throttled below.
         self.cursor_h_line.set_data(pos=pos[1], color=color)
         self.cursor_v_line.set_data(pos=pos[0], color=color)
+
+        t = time.time()
+        if t - self._cursor_last_update_t >= self._cursor_update_interval:
+            # Enough time elapsed: repaint now and stop any pending trailing flush.
+            self._cursor_last_update_t = t
+            self._cursor_flush_timer.stop()
+            self.view.scene.update()
+        else:
+            # Too soon: defer a single trailing repaint so the crosshair still lands on the final
+            # position once the mouse stops, without forcing a full repaint on every event.
+            if not self._cursor_flush_timer.isActive():
+                remaining_ms = int(
+                    (self._cursor_update_interval - (t - self._cursor_last_update_t)) * 1000
+                )
+                self._cursor_flush_timer.start(max(remaining_ms, 1))
+
+    def _flush_cursor_update(self):
+        """Trailing crosshair repaint, scheduled when on_mouse_position is throttled."""
+        self._cursor_last_update_t = time.time()
         self.view.scene.update()
 
     def on_mouse_scroll(self, event):

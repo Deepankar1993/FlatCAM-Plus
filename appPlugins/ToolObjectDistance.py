@@ -28,6 +28,7 @@ log = logging.getLogger('base')
 
 
 class ObjectDistance(AppTool):
+    plugin_tooltip = _("Measure the minimum distance between two selected objects on the canvas.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

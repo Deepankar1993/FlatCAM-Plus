@@ -28,6 +28,7 @@ log = logging.getLogger('base')
 
 class ObjectReport(AppTool):
     pluginName = _("Object Report")
+    plugin_tooltip = _("Show a report of the selected object's type, dimensions and properties.")
 
     calculations_finished = QtCore.pyqtSignal(float, float, float, float, float, object)
 

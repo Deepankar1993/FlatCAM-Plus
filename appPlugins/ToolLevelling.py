@@ -66,6 +66,7 @@ log = logging.getLogger('base')
 
 
 class ToolLevelling(AppTool, CNCjob):
+    plugin_tooltip = _("Probe the board height and adjust the G-Code to follow an uneven surface.")
     build_al_table_sig = QtCore.pyqtSignal()
 
     def __init__(self, app):

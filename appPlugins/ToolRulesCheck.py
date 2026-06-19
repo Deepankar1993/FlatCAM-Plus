@@ -29,6 +29,7 @@ log = logging.getLogger('base')
 
 
 class RulesCheck(AppTool):
+    plugin_tooltip = _("Run a design-rules check on the layers and report any violations.")
 
     tool_finished = QtCore.pyqtSignal(list)
 

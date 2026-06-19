@@ -33,6 +33,7 @@ log = logging.getLogger('base')
 
 
 class ToolPunchGerber(AppTool, Gerber):
+    plugin_tooltip = _("Punch holes in the pads of a Gerber so the pads become annular rings.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

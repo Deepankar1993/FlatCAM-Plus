@@ -35,6 +35,7 @@ if '_' not in builtins.__dict__:
 
 
 class ToolImage(AppTool):
+    plugin_tooltip = _("Import a raster image and trace it into a Gerber or Geometry object.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

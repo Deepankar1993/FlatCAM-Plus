@@ -33,6 +33,7 @@ log = logging.getLogger('base')
 
 
 class ToolFollow(AppTool, Gerber):
+    plugin_tooltip = _("Trace the centerlines of a Gerber's tracks for single-line engraving.")
 
     optimal_found_sig = QtCore.pyqtSignal(float)
 

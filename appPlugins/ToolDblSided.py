@@ -26,6 +26,7 @@ log = logging.getLogger('base')
 
 
 class DblSidedTool(AppTool):
+    plugin_tooltip = _("Mirror objects and find alignment points for two-sided PCB fabrication.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

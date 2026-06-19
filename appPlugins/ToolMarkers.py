@@ -31,6 +31,7 @@ log = logging.getLogger('base')
 
 
 class ToolMarkers(AppTool):
+    plugin_tooltip = _("Place corner/alignment marker geometry on an object to aid registration.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

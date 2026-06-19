@@ -45,6 +45,7 @@ class ToolPDF(AppTool):
     Return a list of geometries
     """
     pluginName = _("PDF Import Tool")
+    plugin_tooltip = _("Parse a PDF file and import its vector content as Gerber and/or Geometry.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

@@ -27,6 +27,7 @@ log = logging.getLogger('base')
 
 
 class PcbWizard(AppTool):
+    plugin_tooltip = _("Import Excellon drill files produced by PcbWizard (pairs .INF and .DRL).")
 
     file_loaded = QtCore.pyqtSignal(str, str)
 

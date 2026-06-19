@@ -44,6 +44,7 @@ log = logging.getLogger('base')
 
 
 class ToolPaint(AppTool, Gerber):
+    plugin_tooltip = _("Fill the inside of selected polygons or areas with overlapping tool passes.")
 
     def __init__(self, app):
         self.app = app

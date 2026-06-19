@@ -28,6 +28,7 @@ log = logging.getLogger('base')
 
 
 class ToolLaser(AppTool):
+    plugin_tooltip = _("Generate laser-engraving/cutting G-Code with S-power control for laser engravers.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

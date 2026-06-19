@@ -25,6 +25,7 @@ log = logging.getLogger('base')
 
 
 class ToolTransform(AppTool):
+    plugin_tooltip = _("Rotate, skew, scale, mirror, offset or buffer the selected objects.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

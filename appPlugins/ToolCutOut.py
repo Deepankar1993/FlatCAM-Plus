@@ -39,6 +39,7 @@ log = logging.getLogger('base')
 
 
 class CutOut(AppTool):
+    plugin_tooltip = _("Create the board-perimeter cutout, with holding bridge gaps (mouse-bites).")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

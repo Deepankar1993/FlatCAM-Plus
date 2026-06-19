@@ -33,6 +33,7 @@ log = logging.getLogger('base')
 
 
 class ToolFiducials(AppTool):
+    plugin_tooltip = _("Add fiducial alignment marks to the board for pick-and-place registration.")
 
     def __init__(self, app):
         AppTool.__init__(self, app)

@@ -28,6 +28,7 @@ log = logging.getLogger('base')
 class ToolMove(AppTool):
 
     pluginName = _("Move")
+    plugin_tooltip = _("Interactively move selected objects from a clicked origin to a destination.")
     replot_signal = QtCore.pyqtSignal(list)
 
     def __init__(self, app):

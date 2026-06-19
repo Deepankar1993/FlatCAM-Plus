@@ -29,6 +29,7 @@ log = logging.getLogger('base')
 
 
 class ToolInvertGerber(AppTool):
+    plugin_tooltip = _("Invert a Gerber's polarity, swapping its copper and clear areas.")
 
     def __init__(self, app):
         self.app = app

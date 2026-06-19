@@ -36,6 +36,7 @@ log = logging.getLogger('base')
 
 
 class ToolCopperThieving(AppTool):
+    plugin_tooltip = _("Add filler copper to empty board areas to balance copper density.")
     work_finished = QtCore.pyqtSignal()
 
     def __init__(self, app):

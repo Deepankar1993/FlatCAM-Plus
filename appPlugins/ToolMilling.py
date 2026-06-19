@@ -78,6 +78,7 @@ class HybridGeoExc:
 
 
 class ToolMilling(AppTool, Excellon):
+    plugin_tooltip = _("Generate milling G-Code from Geometry, or mill the holes/slots of an Excellon.")
     build_ui_sig = QtCore.pyqtSignal()
     launch_job = QtCore.pyqtSignal()
 

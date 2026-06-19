@@ -39,6 +39,7 @@ log = logging.getLogger('base')
 
 
 class ToolIsolation(AppTool, Gerber):
+    plugin_tooltip = _("Mill around a Gerber's copper tracks to electrically isolate them.")
     optimal_found_sig = QtCore.pyqtSignal(float)
 
     def __init__(self, app):

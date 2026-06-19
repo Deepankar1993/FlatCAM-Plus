@@ -29,6 +29,7 @@ log = logging.getLogger('base')
 
 
 class ToolOptimal(AppTool):
+    plugin_tooltip = _("Find the smallest gap in a Gerber to pick the largest safe isolation tool.")
 
     update_text = QtCore.pyqtSignal(list)
     update_sec_distances = QtCore.pyqtSignal(dict)

@@ -8,6 +8,16 @@ CHANGELOG for FlatCAM Evo beta
 
 =================================================
 
+18.06.2026  (performance, etch fixes, rebrand, tooltips)
+
+- Performance: fixed the heavy sluggishness that appeared once a Gerber was loaded. Root cause: the "big cursor" crosshair (PlotCanvas.on_mouse_position) called self.view.scene.update() on EVERY mouse-position event, forcing a full repaint of the entire scene — whose cost scales with the loaded geometry. The crosshair buffers are still updated every event (cheap), but the full-scene repaint is now throttled to ~66 Hz with a guaranteed trailing repaint so the crosshair still tracks smoothly and lands on the final position at rest. (The small-cursor default path was never affected.)
+- Etch Compensation plugin: fixed 3 crashes that hit real boards with non-standard apertures - KeyError on a missing aperture 'type', KeyError on an 'R'/'O' aperture missing 'width'/'height' during the size recompute, and AttributeError when an aperture's 'solid' geometry was None. Aperture access is now defensive (.get with type/key guards, skips None/empty geometry). A source object with no geometry now reports a clear error instead of silently producing an empty board. (This is in addition to the earlier 0/negative Etch Factor guard.)
+- Etch Compensation plugin: made it beginner-friendly - added a short plain-language description of what etch compensation does and when to use it, and rewrote every field tooltip with units and realistic example values (1oz copper = 35um, etch factor 2-3, etc.).
+- Branding: the application icon/logo art still read "Evo"; the chip logo now reads "Plus" across all sizes (16-256) and both light/dark theme resource sets. (The splash screens already said "Plus".)
+- Tooltips: added beginner-friendly tooltips (and status-bar tips) to essentially every menu item - ~140 actions across the menu bar, editor menus, and right-click/context menus in MainGUI.py (with setToolTipsVisible enabled on all menus), plus a per-plugin description tooltip on all ~34 plugin/tool menu actions (wired through AppTool.install()).
+
+=================================================
+
 17.06.2026  (performance)
 
 - Performance: the app felt sluggish/laggy across the board. Profiled the hot paths and fixed the pervasive offenders:
